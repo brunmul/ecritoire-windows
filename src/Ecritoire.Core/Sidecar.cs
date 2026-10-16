@@ -23,6 +23,51 @@ public static class Sidecar
         return d[(r.Length + 1)..].Replace('\\', '/').Normalize(NormalizationForm.FormC);
     }
 
+    public static string? CommentsFile(string document, string root) =>
+        RelativePath(document, root) is { } rel ? Path.Combine(root, FolderName, "commentaires", rel.Replace('/', Path.DirectorySeparatorChar) + ".json") : null;
+
+    public static string? SnapshotFile(string document, string root) =>
+        RelativePath(document, root) is { } rel ? Path.Combine(root, FolderName, "instantanes", rel.Replace('/', Path.DirectorySeparatorChar)) : null;
+
+    public static string? LoadSnapshot(string document, string root)
+    {
+        var file = SnapshotFile(document, root);
+        return file != null && File.Exists(file) ? DocumentFile.ReadText(file) : null;
+    }
+
+    /// <summary>Enregistre (ou efface avec null) l'instantané d'un document : sa version de référence, en-tête compris.</summary>
+    public static void SaveSnapshot(string? text, string document, string root)
+    {
+        var file = SnapshotFile(document, root);
+        if (file == null) return;
+        if (text == null) { if (File.Exists(file)) File.Delete(file); return; }
+        Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+        DocumentFile.WriteAtomic(file, text);
+    }
+
+    /// <summary>Un document ou un dossier a été renommé ou déplacé : ses commentaires et instantanés suivent.</summary>
+    public static void Relocate(string oldPath, string newPath, string root)
+    {
+        if (RelativePath(oldPath, root) is not { } oldRel || RelativePath(newPath, root) is not { } newRel) return;
+        var basePath = Path.Combine(root, FolderName);
+        foreach (var kind in new[] { "commentaires", "instantanes" })
+        {
+            var dir = Path.Combine(basePath, kind);
+            var pairs = new List<(string, string)> { (Path.Combine(dir, oldRel), Path.Combine(dir, newRel)) };
+            if (kind == "commentaires") pairs.Add((Path.Combine(dir, oldRel + ".json"), Path.Combine(dir, newRel + ".json")));
+            foreach (var (from, to) in pairs)
+            {
+                if (!File.Exists(from) && !Directory.Exists(from)) continue;
+                try
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(to)!);
+                    if (Directory.Exists(from)) Directory.Move(from, to); else File.Move(from, to);
+                }
+                catch (IOException) { }
+            }
+        }
+    }
+
     /// <summary>Affichage choisi pour un document (« prose » ou « poeme »), null si aucun choix enregistré.</summary>
     public static Display? DisplayFor(string document, string root)
     {

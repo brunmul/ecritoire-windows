@@ -74,4 +74,18 @@ public static class Text
         }
         return (a.Length - i).CompareTo(b.Length - j);
     }
+
+    /// <summary>Ordre des chaînes de Swift : caractères Unicode (scalaires) de la forme composée, un à un.</summary>
+    public static readonly IComparer<string> ScalarComparer = Comparer<string>.Create((a, b) =>
+    {
+        var ea = a.Normalize(NormalizationForm.FormC).EnumerateRunes().GetEnumerator();
+        var eb = b.Normalize(NormalizationForm.FormC).EnumerateRunes().GetEnumerator();
+        while (true)
+        {
+            bool ha = ea.MoveNext(), hb = eb.MoveNext();
+            if (!ha || !hb) return ha == hb ? 0 : ha ? 1 : -1;
+            int c = ea.Current.Value.CompareTo(eb.Current.Value);
+            if (c != 0) return c;
+        }
+    });
 }
