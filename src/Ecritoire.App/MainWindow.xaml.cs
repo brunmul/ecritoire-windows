@@ -47,6 +47,17 @@ public partial class MainWindow : Window
         Editor.TextArea.SelectionCornerRadius = 2;
         Editor.TextArea.Caret.CaretBrush = Theme.Accent;
         Editor.TextChanged += (_, _) => TextEdited();
+        Editor.TextArea.TextView.LineTransformers.Add(new CommentMarks(this));
+        Editor.TextArea.TextView.LineTransformers.Add(new DiffMarks(this));
+        Editor.TextArea.Caret.PositionChanged += (_, _) => { CaretMovedForComments(); CaretMovedForReview(); };
+        var commentItem = new MenuItem { Header = "Commenter", InputGestureText = "Ctrl+Maj+M" };
+        commentItem.Click += (_, _) => StartComment();
+        Editor.ContextMenu = new ContextMenu { Items = {
+            commentItem, new Separator(),
+            new MenuItem { Header = "Couper", Command = ApplicationCommands.Cut },
+            new MenuItem { Header = "Copier", Command = ApplicationCommands.Copy },
+            new MenuItem { Header = "Coller", Command = ApplicationCommands.Paste } } };
+        Editor.ContextMenuOpening += (_, _) => commentItem.IsEnabled = current != null && review == null;
         saveTimer.Tick += (_, _) => Save();
         searchTimer.Tick += (_, _) => { searchTimer.Stop(); RunSearch(); };
         treeTimer.Tick += (_, _) => { treeTimer.Stop(); ReloadTree(); };
@@ -56,6 +67,7 @@ public partial class MainWindow : Window
         {
             SidebarColumn.Width = new GridLength(settings.SidebarWidth);
             ApplyLayout();
+            UpdateRightPanel();
             if (settings.LastBinder is { } last && Directory.Exists(last)) OpenBinder(last);
         };
     }
@@ -100,7 +112,7 @@ public partial class MainWindow : Window
         var last = settings.LastDocument.GetValueOrDefault(root);
         var first = last != null && File.Exists(last) ? last : tree?.AllDescendants.FirstOrDefault(n => !n.IsFolder)?.Path;
         if (first != null) { OpenDocument(first); SelectInTree(first); }
-        else { current = null; Editor.Visibility = Visibility.Collapsed; }
+        else CloseDocument();
     }
 
     void ReloadTree()
@@ -187,15 +199,15 @@ public partial class MainWindow : Window
             SaveState.Text = "Lecture impossible : " + ex.Message;
             return;
         }
-        loading = true;
+        review = null;
+        Editor.IsReadOnly = false;
         poemDisplay = Sidecar.PoemDisplay(path, root, current.Body);
         look.DocumentFolder = Path.GetDirectoryName(path);
         ApplyLayout();
-        Editor.Document = new TextDocument(current.Body.Replace("\r\n", "\n"));
+        SetEditorDocument(current.Body.Replace("\r\n", "\n"));
         Editor.Visibility = Visibility.Visible;
         Editor.ScrollToHome();
         Editor.TextArea.Caret.Offset = 0;
-        loading = false;
         dirty = false;
         if (root != null) settings.LastDocument[root] = path;
         DocumentTitle.Text = current.DisplayTitle;
@@ -203,12 +215,27 @@ public partial class MainWindow : Window
         Title = current.DisplayTitle + " — Écritoire";
         SaveState.Text = "✓ Enregistré";
         UpdateWordCount();
+        LoadComments(path, Editor.Text);
+        pendingChanges = null;
+        UpdateChangesUI();
+        RefreshPendingChanges();
+        UpdateInspector();
         Editor.TextArea.Focus();
     }
 
-    void TextEdited()
+    /// <summary>Nouveau texte dans l'éditeur ; les plages des commentaires suivent ensuite chaque frappe.</summary>
+    void SetEditorDocument(string text)
     {
-        if (loading || current == null) return;
+        loading = true;
+        var doc = new TextDocument(text);
+        doc.Changed += (_, e) => { if (review == null) comments.TextEdited(e.Offset, e.RemovalLength, e.InsertionLength); };
+        Editor.Document = doc;
+        loading = false;
+    }
+
+    void TextEdited(bool inspector = false)
+    {
+        if ((loading && !inspector) || current == null || review != null) return;
         dirty = true;
         SaveState.Text = "● Modifié";
         saveTimer.Stop();
@@ -225,7 +252,7 @@ public partial class MainWindow : Window
     void Save()
     {
         saveTimer.Stop();
-        if (current == null || !dirty) return;
+        if (current == null || !dirty || review != null) return;
         var text = Editor.Text;
         // Fins de ligne de l'app macOS (LF), et versets renumérotés d'après leur position.
         var wanted = text.Replace("\r\n", "\n").Replace('\r', '\n');
@@ -237,6 +264,8 @@ public partial class MainWindow : Window
             if (current.Save()) index?.Update(current.Path);
             dirty = false;
             SaveState.Text = "✓ Enregistré";
+            if (comments.All.Count > 0) comments.Persist(wanted);
+            if (pendingChanges != null) RefreshPendingChanges();
         }
         catch (Exception ex)
         {
@@ -269,7 +298,8 @@ public partial class MainWindow : Window
             var verses = Poem.Verses(body);
             WordCount.Text = $"{verses.Count} versets · {WordCounter.Count(body) - verses.Count(v => v.Marker != null)} mots";
         }
-        else WordCount.Text = $"{WordCounter.Count(body):N0} mots".Replace(",", " ");
+        else WordCount.Text = $"{WordCounter.Count(body):N0} mots".Replace(",", " ").Replace("\u00A0", " ").Replace("\u202F", " ");
+        FileWordsText.Text = WordCount.Text;
     }
 
     // MARK: Affichage et zoom
@@ -315,9 +345,21 @@ public partial class MainWindow : Window
     {
         bool ctrl = (Keyboard.Modifiers & ModifierKeys.Control) != 0, shift = (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
         bool alt = (Keyboard.Modifiers & ModifierKeys.Alt) != 0;
+        if (review != null)
+        {
+            var key = e.Key == Key.System ? e.SystemKey : e.Key;
+            if (e.Key == Key.Escape) { ExitReview(); e.Handled = true; return; }
+            if (alt && !ctrl && key == Key.Up) { SelectChange(-1); e.Handled = true; return; }
+            if (alt && !ctrl && key == Key.Down) { SelectChange(+1); e.Handled = true; return; }
+        }
         if (!ctrl || alt) return; // Ctrl+Alt = AltGr : laisse taper @ # { [ €
         switch (e.Key)
         {
+            case Key.M when shift: StartComment(); e.Handled = true; break;
+            case Key.C when shift: ToggleComments(); e.Handled = true; break;
+            case Key.I when !shift: InspectorToggleClick(this, e); e.Handled = true; break;
+            case Key.E when !shift: ExportClick(this, e); e.Handled = true; break;
+            case Key.N: Run(() => { if (shift) NewFolder(null); else NewDocument(null); }); e.Handled = true; break;
             case Key.O: OpenBinderClick(this, e); e.Handled = true; break;
             case Key.S: Flush(); e.Handled = true; break;
             case Key.F when shift: ShowSearch(); e.Handled = true; break;
@@ -357,14 +399,24 @@ public partial class MainWindow : Window
         {
             if (!dirty && File.Exists(path) && current.ChangedOnDisk())
             {
-                int caret = Editor.TextArea.Caret.Offset;
+                // Modifié par un autre programme (Claude, synchronisation…) : la version d'avant devient l'instantané.
+                KeepSnapshotOfPreviousVersion();
                 current.Reload();
-                loading = true;
-                ReplaceText(current.Body.Replace("\r\n", "\n"));
-                loading = false;
-                Editor.TextArea.Caret.Offset = Math.Min(caret, Editor.Document.TextLength);
+                if (review != null) EnterReview(review.Current);
+                else
+                {
+                    int caret = Editor.TextArea.Caret.Offset;
+                    loading = true;
+                    ReplaceText(current.Body.Replace("\r\n", "\n"));
+                    loading = false;
+                    Editor.TextArea.Caret.Offset = Math.Min(caret, Editor.Document.TextLength);
+                    comments.Reanchor(Editor.Text);
+                    RefreshComments();
+                    RefreshPendingChanges();
+                }
                 DocumentTitle.Text = current.DisplayTitle;
                 UpdateWordCount();
+                UpdateInspector();
             }
             if (!structural) return;
         }

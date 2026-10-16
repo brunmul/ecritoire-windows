@@ -29,6 +29,17 @@ public static class BinderIcons
         ["recherche"] = ("", Rgb(0x4A86C8)),
     };
 
+    /// <summary>Icônes proposées dans le menu du classeur, dans l'ordre de l'app macOS, avec leur nom.</summary>
+    public static readonly (string Id, string Label)[] Labels =
+    {
+        ("carnet-rouge", "Carnet rouge"), ("carnet-orange", "Carnet orange"), ("carnet-jaune", "Carnet jaune"), ("carnet-vert", "Carnet vert"),
+        ("carnet-bleu", "Carnet bleu"), ("carnet-violet", "Carnet violet"), ("carnet-rose", "Carnet rose"), ("carnet-brun", "Carnet brun"),
+        ("carnet-noir", "Carnet noir"), ("notes", "Bloc-notes"), ("eprouvette", "Éprouvette"), ("crayon", "Crayon"), ("carte", "Carte"),
+        ("classeur", "Classeur à tiroirs"), ("calendrier", "Calendrier"), ("liminaire", "Pages liminaires"), ("pellicule", "Pellicule"),
+        ("spirale", "Carnet à spirale"), ("personnage", "Personnage"), ("idee", "Idée"), ("etoile", "Étoile"), ("drapeau", "Drapeau"),
+        ("epingle", "Épingle"), ("manuscrit", "Manuscrit"), ("recherche", "Recherche"),
+    };
+
     public static (string Glyph, Brush Color) For(string? icon, bool isFolder)
     {
         if (icon != null && Catalog.TryGetValue(icon, out var hit)) return hit;

@@ -20,6 +20,17 @@
                     <TextBlock x:Name="DocumentTitle" FontWeight="SemiBold" Text="Écritoire" TextTrimming="CharacterEllipsis" MaxWidth="520"/>
                     <TextBlock x:Name="DocumentPath" FontSize="11" Foreground="{StaticResource TexteSecondaire}" TextTrimming="CharacterEllipsis" MaxWidth="520"/>
                 </StackPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
+                    <Button x:Name="ExportButton" Content="&#xEDE1;" Style="{StaticResource BoutonIcone}" Click="ExportClick" ToolTip="Exporter en Markdown ou en PDF… (Ctrl+E)"/>
+                    <Grid>
+                        <ToggleButton x:Name="CommentsButton" Content="&#xE90A;" Style="{StaticResource BoutonBascule}" Click="CommentsToggleClick" ToolTip="Afficher les commentaires (Ctrl+Maj+C)"/>
+                        <Border x:Name="CommentsBadge" Background="{StaticResource Accent}" CornerRadius="7" MinWidth="14" Height="14" Padding="3,0"
+                                HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,1,0" IsHitTestVisible="False" Visibility="Collapsed">
+                            <TextBlock x:Name="CommentsBadgeText" FontSize="9" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </Grid>
+                    <ToggleButton x:Name="InspectorButton" Content="&#xE946;" Style="{StaticResource BoutonBascule}" Click="InspectorToggleClick" ToolTip="Inspecteur : titre, synopsis, statut, publication (Ctrl+I)"/>
+                </StackPanel>
                 <Border DockPanel.Dock="Right" Background="#0F000000" CornerRadius="8" Padding="2" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal">
                         <ToggleButton x:Name="ProseButton" Content="Prose" Style="{StaticResource Bascule}" Click="ProseClick" ToolTip="Affichage prose"/>
@@ -34,6 +45,7 @@
                 <ColumnDefinition x:Name="SidebarColumn" Width="260" MinWidth="180"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
             <!-- Classeur / recherche -->
@@ -49,8 +61,12 @@
                     </Border>
                     <Grid>
                         <TreeView x:Name="Tree" Background="Transparent" BorderThickness="0" Padding="4,6,4,6"
-                                  SelectedItemChanged="TreeSelectionChanged"
-                                  VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"/>
+                                  SelectedItemChanged="TreeSelectionChanged" AllowDrop="True" ContextMenuOpening="TreeContextMenuOpening"
+                                  PreviewMouseLeftButtonDown="TreeMouseDown" PreviewMouseMove="TreeMouseMove" DragOver="TreeDragOver" Drop="TreeDrop"
+                                  PreviewMouseRightButtonDown="TreeRightMouseDown" KeyDown="TreeKeyDown"
+                                  VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+                            <TreeView.ContextMenu><ContextMenu/></TreeView.ContextMenu>
+                        </TreeView>
                         <DockPanel x:Name="SearchPanel" Visibility="Collapsed" Background="{StaticResource Panneau}">
                             <Border DockPanel.Dock="Top" Margin="10,10,10,6" Background="White" CornerRadius="7" BorderBrush="{StaticResource Filet}" BorderThickness="1">
                                 <DockPanel Margin="8,4">
@@ -83,6 +99,32 @@
 
             <!-- Bureau et page -->
             <Border Grid.Column="2" Background="{StaticResource Bureau}">
+                <DockPanel>
+                    <!-- Bandeau : modifications depuis l'instantané -->
+                    <Border x:Name="ChangesBanner" DockPanel.Dock="Top" Visibility="Collapsed" Background="{StaticResource Bureau}" BorderBrush="{StaticResource Filet}" BorderThickness="0,0,0,1" MinHeight="40">
+                        <DockPanel Margin="12,4">
+                            <TextBlock DockPanel.Dock="Left" Text="&#xE895;" FontFamily="{StaticResource Glyphes}" Foreground="{StaticResource TexteSecondaire}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <Button DockPanel.Dock="Right" Content="Ignorer" Padding="10,3" Margin="6,0,0,0" Click="DiscardSnapshotClick" ToolTip="La version actuelle devient la référence"/>
+                            <Button DockPanel.Dock="Right" Content="Voir les modifications" Padding="10,3" Click="EnterReviewClick"/>
+                            <TextBlock x:Name="ChangesText" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        </DockPanel>
+                    </Border>
+                    <!-- Barre du mode « Modifications » -->
+                    <Border x:Name="ReviewBar" DockPanel.Dock="Top" Visibility="Collapsed" Background="{StaticResource Bureau}" Padding="0,6">
+                        <Border Background="White" CornerRadius="8" BorderBrush="{StaticResource Filet}" BorderThickness="1" HorizontalAlignment="Center" Padding="10,4">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE895;" FontFamily="{StaticResource Glyphes}" Foreground="#33A85C" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBlock x:Name="ReviewText" MinWidth="150" VerticalAlignment="Center"/>
+                                <Button Content="&#xE70E;" Style="{StaticResource BoutonIcone}" Click="PreviousChangeClick" ToolTip="Précédente (Alt+Haut)"/>
+                                <Button Content="&#xE70D;" Style="{StaticResource BoutonIcone}" Click="NextChangeClick" ToolTip="Suivante (Alt+Bas)"/>
+                                <Button Content="✓ Accepter" Padding="10,3" Margin="8,0,4,0" Background="#33A85C" Foreground="White" BorderThickness="0" Click="AcceptChangeClick" ToolTip="Garder cette modification"/>
+                                <Button Content="✕ Refuser" Padding="10,3" Click="RejectChangeClick" ToolTip="Revenir au texte d'avant pour ce passage"/>
+                                <Button Content="Tout accepter" Padding="8,3" Margin="12,0,4,0" Click="AcceptAllClick"/>
+                                <Button Content="Tout refuser" Padding="8,3" Click="RejectAllClick"/>
+                                <Button Content="Terminer" Padding="10,3" Margin="12,0,0,0" Click="ExitReviewClick" ToolTip="Échap"/>
+                            </StackPanel>
+                        </Border>
+                    </Border>
                 <Grid>
                     <Border x:Name="PageBorder" Background="{StaticResource Page}" HorizontalAlignment="Center" Margin="0,12,0,0"
                             BorderBrush="{StaticResource Filet}" BorderThickness="1,1,1,0">
@@ -96,6 +138,90 @@
                                    TextWrapping="Wrap" TextAlignment="Center" Foreground="{StaticResource TexteSecondaire}" Margin="0,10,0,16"/>
                         <Button Content="Ouvrir un classeur…" HorizontalAlignment="Center" Padding="16,6" Click="OpenBinderClick"/>
                     </StackPanel>
+                </Grid>
+                </DockPanel>
+            </Border>
+
+            <!-- Volet de droite : commentaires ou inspecteur -->
+            <Border x:Name="RightPanel" Grid.Column="3" Width="300" Visibility="Collapsed" Background="{StaticResource Panneau}" BorderBrush="{StaticResource Filet}" BorderThickness="1,0,0,0">
+                <Grid>
+                    <DockPanel x:Name="CommentsPanel">
+                        <Border DockPanel.Dock="Top" Height="40" BorderBrush="{StaticResource Filet}" BorderThickness="0,0,0,1">
+                            <DockPanel Margin="8,0,6,0">
+                                <Button x:Name="ArchiveBack" DockPanel.Dock="Left" Content="&#xE76B;" Style="{StaticResource BoutonIcone}" FontSize="11" Width="24" Click="ShowOpenCommentsClick" ToolTip="Revenir aux commentaires en cours" Visibility="Collapsed"/>
+                                <TextBlock x:Name="CommentsHeaderIcon" DockPanel.Dock="Left" Text="&#xE90A;" FontFamily="{StaticResource Glyphes}" Foreground="{StaticResource TexteSecondaire}" VerticalAlignment="Center" Margin="4,0,8,0"/>
+                                <Button DockPanel.Dock="Right" Content="&#xE711;" Style="{StaticResource BoutonIcone}" FontSize="10" Width="24" Click="CommentsToggleClick" ToolTip="Masquer le volet (Ctrl+Maj+C) — le bouton bulle de la barre d'outils le rouvre"/>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock x:Name="CommentsHeader" Text="Commentaires" FontWeight="SemiBold"/>
+                                    <Border x:Name="CommentsCountPill" Background="{StaticResource Filet}" CornerRadius="8" Padding="6,0" Margin="7,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock x:Name="CommentsCount" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TexteSecondaire}"/>
+                                    </Border>
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
+                        <Border DockPanel.Dock="Bottom" Height="30" BorderBrush="{StaticResource Filet}" BorderThickness="0,1,0,0">
+                            <DockPanel Margin="12,0">
+                                <TextBlock x:Name="ArchiveLink" DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{StaticResource Accent}" Cursor="Hand" MouseLeftButtonUp="ArchiveLinkClick" FontSize="11.5"/>
+                                <TextBlock x:Name="CommentsFooter" VerticalAlignment="Center" Foreground="{StaticResource TexteSecondaire}" FontSize="11.5"/>
+                            </DockPanel>
+                        </Border>
+                        <Border x:Name="ClaudeCard" DockPanel.Dock="Top" Margin="10,8" Padding="8" Background="White" CornerRadius="8" BorderBrush="{StaticResource Filet}" BorderThickness="1">
+                            <StackPanel>
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right" x:Name="ClaudeMenuButton" Content="&#xE712;" Style="{StaticResource BoutonIcone}" Click="ClaudeMenuClick" Margin="4,0,0,0">
+                                        <Button.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem x:Name="CopyPromptItem" Header="Envoyer (copier le prompt)" Click="CopyPromptClick"/>
+                                                <MenuItem x:Name="SavePromptItem" Header="Envoyer (enregistrer le prompt dans un fichier)…" Click="SavePromptClick"/>
+                                                <Separator/>
+                                                <MenuItem Header="Créer un instantané (point de comparaison)" Click="TakeSnapshotClick"/>
+                                            </ContextMenu>
+                                        </Button.ContextMenu>
+                                    </Button>
+                                    <Button x:Name="SendButton" Padding="8,4" Click="CopyPromptClick"
+                                            ToolTip="Copie un seul prompt avec tous les commentaires en cours et le texte intégral, garde un instantané du texte, puis archive ces commentaires"/>
+                                </DockPanel>
+                                <DockPanel x:Name="SentNote" Margin="0,8,0,0" Visibility="Collapsed">
+                                    <TextBlock DockPanel.Dock="Right" Text="Voir" Foreground="{StaticResource Accent}" FontWeight="SemiBold" FontSize="11.5" Cursor="Hand" MouseLeftButtonUp="ArchiveLinkClick" Margin="6,0,0,0"/>
+                                    <TextBlock x:Name="SentText" TextWrapping="Wrap" FontSize="11.5" Foreground="{StaticResource TexteSecondaire}"/>
+                                </DockPanel>
+                                <TextBlock x:Name="SendHint" Margin="0,8,0,0" Text="Les commentaires envoyés passent en archive." FontSize="11.5" Foreground="{StaticResource TexteSecondaire}"/>
+                                <DockPanel x:Name="PendingNote" Margin="0,8,0,0" Visibility="Collapsed">
+                                    <TextBlock x:Name="PendingLink" DockPanel.Dock="Right" Text="Voir" Foreground="{StaticResource Accent}" FontWeight="SemiBold" FontSize="11.5" Cursor="Hand" MouseLeftButtonUp="PendingLinkClick" Margin="6,0,0,0"/>
+                                    <TextBlock x:Name="PendingText" TextWrapping="Wrap" FontSize="11.5" Foreground="{StaticResource TexteSecondaire}"/>
+                                </DockPanel>
+                            </StackPanel>
+                        </Border>
+                        <ScrollViewer x:Name="CommentsScroll" VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="CommentsList" Margin="10,2,10,12"/>
+                        </ScrollViewer>
+                    </DockPanel>
+
+                    <DockPanel x:Name="InspectorPanel" Visibility="Collapsed">
+                        <Border DockPanel.Dock="Top" Height="40" BorderBrush="{StaticResource Filet}" BorderThickness="0,0,0,1">
+                            <DockPanel Margin="12,0,6,0">
+                                <TextBlock DockPanel.Dock="Left" Text="&#xE946;" FontFamily="{StaticResource Glyphes}" Foreground="{StaticResource TexteSecondaire}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <Button DockPanel.Dock="Right" Content="&#xE711;" Style="{StaticResource BoutonIcone}" FontSize="10" Width="24" Click="InspectorToggleClick" ToolTip="Masquer l'inspecteur (Ctrl+I)"/>
+                                <TextBlock Text="Inspecteur" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </DockPanel>
+                        </Border>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="InspectorFields" Margin="14,12">
+                                <TextBlock Text="DOCUMENT" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8"/>
+                                <TextBlock Text="Titre" Margin="0,0,0,3"/>
+                                <TextBox x:Name="TitleBox" Padding="4,3" TextChanged="InspectorChanged"/>
+                                <TextBlock Text="Synopsis" Margin="0,10,0,3"/>
+                                <TextBox x:Name="SynopsisBox" Padding="4,3" TextWrapping="Wrap" AcceptsReturn="False" MinHeight="64" MaxHeight="160" VerticalScrollBarVisibility="Auto" TextChanged="InspectorChanged"/>
+                                <TextBlock Text="Statut" Margin="0,10,0,3"/>
+                                <ComboBox x:Name="StatusBox" SelectionChanged="InspectorChanged"/>
+                                <CheckBox x:Name="PublishBox" Content="Publier sur le wiki" Margin="0,12,0,0" Click="InspectorChanged"/>
+                                <TextBlock Text="FICHIER" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource TexteSecondaire}" Margin="0,22,0,8"/>
+                                <TextBlock x:Name="FileNameText" TextWrapping="Wrap"/>
+                                <TextBlock x:Name="FileWordsText" Foreground="{StaticResource TexteSecondaire}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </DockPanel>
+                    <TextBlock x:Name="InspectorEmpty" Text="Aucun document" Foreground="{StaticResource TexteSecondaire}" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
                 </Grid>
             </Border>
         </Grid>

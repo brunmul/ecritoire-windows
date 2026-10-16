@@ -10,6 +10,10 @@ public sealed class Settings
     public Dictionary<string, string> LastDocument { get; set; } = new();
     public double Zoom { get; set; } = 1.0;
     public double SidebarWidth { get; set; } = 260;
+    /// <summary>Volet des commentaires autorisé (il ne s'affiche que s'il y a des commentaires en cours ou sur demande).</summary>
+    public bool CommentsPanelVisible { get; set; } = true;
+    public bool InspectorVisible { get; set; }
+    public string? ExportFolder { get; set; }
 
     static string FilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ecritoire", "reglages.json");
 

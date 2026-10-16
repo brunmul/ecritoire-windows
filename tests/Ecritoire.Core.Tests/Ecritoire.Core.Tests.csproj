@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Ecritoire.Core\Ecritoire.Core.csproj" />
+    <ProjectReference Include="..\..\src\Ecritoire.Pdf\Ecritoire.Pdf.csproj" />
   </ItemGroup>
 
 </Project>

@@ -11,7 +11,7 @@
     <AssemblyName>Ecritoire</AssemblyName>
     <RootNamespace>Ecritoire.App</RootNamespace>
     <Product>Écritoire</Product>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Copyright>GPL-3.0-or-later</Copyright>
     <ApplicationIcon>Ressources\Ecritoire.ico</ApplicationIcon>
     <!-- Un seul fichier .exe autonome (aucun .NET à installer sur le PC). -->
@@ -19,6 +19,8 @@
     <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <!-- Tout dans l’exe, y compris la police de repli de QuestPDF (extraite au premier lancement). -->
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <DebugType>none</DebugType>
   </PropertyGroup>
@@ -26,6 +28,7 @@
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="6.3.1.120" />
     <ProjectReference Include="..\Ecritoire.Core\Ecritoire.Core.csproj" />
+    <ProjectReference Include="..\Ecritoire.Pdf\Ecritoire.Pdf.csproj" />
   </ItemGroup>
 
   <ItemGroup>
