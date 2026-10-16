@@ -1,9 +1,68 @@
-﻿<Application x:Class="Ecritoire.App.App"
+<Application x:Class="Ecritoire.App.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:Ecritoire.App"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <!-- Palette de l'app macOS (Theme.swift) -->
+        <SolidColorBrush x:Key="Panneau" Color="#F6F2FB"/>
+        <SolidColorBrush x:Key="Bureau" Color="#EFECF3"/>
+        <SolidColorBrush x:Key="Entete" Color="#FCFBFD"/>
+        <SolidColorBrush x:Key="Page" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="Filet" Color="#E3DEEA"/>
+        <SolidColorBrush x:Key="Texte" Color="#3D3929"/>
+        <SolidColorBrush x:Key="TexteSecondaire" Color="#7A766A"/>
+        <SolidColorBrush x:Key="Accent" Color="#7B5FBF"/>
+        <SolidColorBrush x:Key="Selection" Color="#E9E2F7"/>
+        <FontFamily x:Key="Interface">Segoe UI Variable Text, Segoe UI</FontFamily>
+        <FontFamily x:Key="Glyphes">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+
+        <Style x:Key="BoutonIcone" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{StaticResource TexteSecondaire}"/>
+            <Setter Property="FontFamily" Value="{StaticResource Glyphes}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Fond" Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Fond" Property="Background" Value="#14000000"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="Bascule" TargetType="ToggleButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{StaticResource Texte}"/>
+            <Setter Property="FontFamily" Value="{StaticResource Interface}"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="12,4"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Fond" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Fond" Property="Background" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Application.Resources>
 </Application>

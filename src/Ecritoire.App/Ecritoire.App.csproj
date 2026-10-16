@@ -1,20 +1,41 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <ItemGroup>
-    <ProjectReference Include="..\Ecritoire.Core\Ecritoire.Core.csproj" />
-  </ItemGroup>
-
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <!-- Construction possible depuis macOS ou Linux (dotnet publish) : seules les références Windows sont nécessaires. -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <AssemblyName>Ecritoire</AssemblyName>
+    <RootNamespace>Ecritoire.App</RootNamespace>
+    <Product>Écritoire</Product>
+    <Version>0.1.0</Version>
+    <Copyright>GPL-3.0-or-later</Copyright>
+    <ApplicationIcon>Ressources\Ecritoire.ico</ApplicationIcon>
+    <!-- Un seul fichier .exe autonome (aucun .NET à installer sur le PC). -->
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>none</DebugType>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AvalonEdit" Version="6.3.1.120" />
+    <ProjectReference Include="..\Ecritoire.Core\Ecritoire.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Polices libres de repli (licence SIL OFL). -->
+    <Resource Include="Polices\*.ttf" />
+    <Resource Include="Ressources\Icone.png" />
+    <!-- Walbaum (police payante) : seulement pour une construction personnelle, depuis Local/Polices (ignoré par git). -->
+    <Resource Include="..\..\Local\Polices\*.ttf;..\..\Local\Polices\*.otf" Condition="Exists('..\..\Local\Polices')">
+      <Link>Polices\%(Filename)%(Extension)</Link>
+    </Resource>
+  </ItemGroup>
 
 </Project>
