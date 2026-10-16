@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Ecritoire.App/Ecritoire.App.csproj" />
+    <Project Path="src/Ecritoire.Core/Ecritoire.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Ecritoire.Core.Tests/Ecritoire.Core.Tests.csproj" />
+  </Folder>
+</Solution>

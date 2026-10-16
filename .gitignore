@@ -1,0 +1,8 @@
+bin/
+obj/
+publish/
+*.user
+.vs/
+.DS_Store
+# Polices personnelles (Walbaum, payante) et réglages locaux : jamais dans le dépôt.
+Local/
