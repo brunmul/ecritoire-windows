@@ -9,6 +9,14 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        // Vérification automatique : --captures dossier --classeur chemin
+        var args = e.Args;
+        int c = Array.IndexOf(args, "--captures"), b = Array.IndexOf(args, "--classeur");
+        if (c >= 0 && c + 1 < args.Length && b >= 0 && b + 1 < args.Length)
+        {
+            Ecritoire.App.MainWindow.ProbeFolder = Path.GetFullPath(args[c + 1]);
+            Ecritoire.App.MainWindow.ProbeBinder = Path.GetFullPath(args[b + 1]);
+        }
         DispatcherUnhandledException += (_, args) =>
         {
             // Une erreur ne doit jamais fermer l'app sans enregistrer : on la montre, on la note, on continue.

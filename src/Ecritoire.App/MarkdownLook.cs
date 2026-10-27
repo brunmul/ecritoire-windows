@@ -236,13 +236,16 @@ public sealed class MarkdownLook
         return spans;
     }
 
-    /// <summary>Image « ![[nom]] » à côté du document.</summary>
+    readonly Dictionary<string, ImageSource> images = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Image « ![[nom]] » à côté du document (chargée une fois).</summary>
     public ImageSource? Image(string line)
     {
         var m = ImageRE.Match(line);
         if (!m.Success || DocumentFolder == null) return null;
         var name = m.Groups[1].Value.Split('|')[0].Trim();
         var path = System.IO.Path.Combine(DocumentFolder, name);
+        if (images.TryGetValue(path, out var cached)) return cached;
         if (!File.Exists(path)) return null;
         try
         {
@@ -252,6 +255,7 @@ public sealed class MarkdownLook
             image.UriSource = new Uri(path);
             image.EndInit();
             image.Freeze();
+            images[path] = image;
             return image;
         }
         catch { return null; }
@@ -344,9 +348,13 @@ public sealed class MarkdownLook
 
             if (kind == LineKind.Image && !active && look.Image(text) is { } image)
             {
-                double width = Math.Min(column, image.Width), height = image.Height * width / Math.Max(1, image.Width);
-                if (height > 900) { width *= 900 / height; height = 900; }
-                pending.Add((offset, line.Length, () => new InlineObjectElement(line.Length, new Image { Source = image, Width = width, Height = height, Margin = new Thickness(0, 6, 0, 6) })));
+                // Taille en pixels de l'image (pas en pouces : une image à 300 ppp paraîtrait minuscule), limitée à la
+                // colonne et à une hauteur d'écran, comme l'app macOS.
+                double pw = image is BitmapSource b ? b.PixelWidth : image.Width, ph = image is BitmapSource b2 ? b2.PixelHeight : image.Height;
+                double width = Math.Min(column, pw), height = ph * width / Math.Max(1, pw);
+                double maxHeight = Math.Round(900 * look.FontSize / Theme.BaseFontSize);
+                if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; }
+                pending.Add((offset, line.Length, () => new InlineObjectElement(line.Length, new Image { Source = image, Width = width, Height = height, Stretch = Stretch.Uniform, Margin = new Thickness(0, Math.Round(look.FontSize * 0.6), 0, Math.Round(look.FontSize * 0.9)) })));
                 return;
             }
             if (kind == LineKind.PoemOrnament && !active)

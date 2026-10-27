@@ -28,7 +28,7 @@ public partial class MainWindow : Window
     SearchIndex? index;
     FileSystemWatcher? watcher;
     CancellationTokenSource? searchCancel;
-    bool dirty, loading, poemDisplay, selectingInTree;
+    bool dirty, loading, poemDisplay, selectingInTree, settingsLocked;
 
     public MainWindow()
     {
@@ -61,22 +61,27 @@ public partial class MainWindow : Window
         saveTimer.Tick += (_, _) => Save();
         searchTimer.Tick += (_, _) => { searchTimer.Stop(); RunSearch(); };
         treeTimer.Tick += (_, _) => { treeTimer.Stop(); ReloadTree(); };
-        if (Theme.HasWalbaum) WelcomeTitle.FontFamily = Theme.Display; else WelcomeTitle.FontFamily = Theme.Display;
+        WelcomeTitle.FontFamily = Theme.Display;
+        // Police d'interface de l'app macOS : Walbaum Grotesk (repli : Hanken Grotesk).
+        FontFamily = Theme.Grotesk;
+        EditorArea.SizeChanged += (_, _) => ApplyLayout();
+        RightPanel.IsVisibleChanged += (_, _) => ApplyLayout();
         PreviewKeyDown += Shortcuts;
         Loaded += (_, _) =>
         {
             SidebarColumn.Width = new GridLength(settings.SidebarWidth);
             ApplyLayout();
             UpdateRightPanel();
-            if (settings.LastBinder is { } last && Directory.Exists(last)) OpenBinder(last);
+            if (ProbeBinder != null) { OpenBinder(ProbeBinder); RunProbe(); }
+            else if (settings.LastBinder is { } last && Directory.Exists(last)) OpenBinder(last);
         };
     }
 
     protected override void OnClosing(CancelEventArgs e)
     {
         Flush();
-        settings.SidebarWidth = SidebarColumn.ActualWidth;
-        settings.Save();
+        if (!SidebarCollapsed) settings.SidebarWidth = SidebarColumn.ActualWidth;
+        if (!settingsLocked) settings.Save();
         base.OnClosing(e);
     }
 
@@ -133,11 +138,24 @@ public partial class MainWindow : Window
 
     TreeViewItem MakeItem(BinderNode node, HashSet<string>? expanded = null)
     {
-        var (glyph, color) = BinderIcons.For(node.Icon, node.IsFolder);
-        var header = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2) };
-        header.Children.Add(new TextBlock { Text = glyph, FontFamily = (FontFamily)FindResource("Glyphes"), Foreground = color, FontSize = 14, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 7, 0) });
-        header.Children.Add(new TextBlock { Text = node.DisplayName, VerticalAlignment = VerticalAlignment.Center, FontSize = 13.5 });
-        var item = new TreeViewItem { Header = header, Tag = node };
+        var (icon, color) = BinderIcons.For(node.Icon, node.IsFolder);
+        var header = new DockPanel { VerticalAlignment = VerticalAlignment.Center };
+        if (icon != null)
+        {
+            var image = Icons.Make(icon, 17, color);
+            image.Margin = new Thickness(0, 0, 9, 0);
+            header.Children.Add(image);
+        }
+        header.Children.Add(new TextBlock { Text = node.DisplayName, VerticalAlignment = VerticalAlignment.Center, FontSize = 14.5, TextTrimming = TextTrimming.CharacterEllipsis });
+        int depth = 0;
+        for (var p = node.Parent; p?.Parent != null; p = p.Parent) depth++;
+        var item = new TreeViewItem
+        {
+            Header = header, Tag = node, Style = (Style)FindResource("LigneClasseur"),
+            // Retrait par niveau (14 px, comme l'app macOS) ; la pastille de sélection garde toute la largeur.
+            Padding = new Thickness(depth * 14, 0, 6, 0),
+            ToolTip = node.DisplayName.Length > 34 ? node.DisplayName : null,
+        };
         if (node.IsFolder && node.Children.Count > 0)
         {
             item.Items.Add(new TreeViewItem { Header = "…" }); // rempli à l'ouverture
@@ -320,12 +338,18 @@ public partial class MainWindow : Window
         double zoom = settings.Zoom;
         double fontSize = Math.Round(Theme.BaseFontSize * zoom);
         double column = Math.Round((poemDisplay ? Theme.BasePoemColumn : Theme.BaseColumn) * zoom);
-        double padding = Math.Round(Theme.BasePagePadding * zoom);
         double gutter = poemDisplay ? Math.Round(fontSize * 3.0) : Math.Round(fontSize * 1.4);
         look.Configure(poemDisplay, fontSize);
-        PageBorder.Width = column + 2 * padding + 2;
-        PageBorder.Padding = new Thickness(Math.Max(0, padding - gutter), Math.Round(36 * zoom), padding, 0);
-        ZoomLabel.Text = $"{Math.Round(zoom * 100)} %";
+        // L'éditeur occupe toute la zone (barre de défilement au bord de la fenêtre) ; la colonne est centrée dans la
+        // place laissée par le panneau de droite flottant.
+        double width = EditorArea.ActualWidth > 0 ? EditorArea.ActualWidth : 900;
+        double panel = RightPanel.Visibility == Visibility.Visible ? RightPanel.Width + 24 : 0;
+        double scrollbar = SystemParameters.VerticalScrollBarWidth;
+        double available = Math.Max(column + 48, width - panel - scrollbar);
+        double left = Math.Max(24, Math.Round((available - column) / 2));
+        double right = Math.Max(24, width - scrollbar - left - column);
+        Editor.Padding = new Thickness(Math.Max(0, left - gutter), Math.Round(28 * zoom), right, 0);
+        ZoomLabel.Text = Math.Abs(zoom - 1) < 0.001 ? "" : $"{Math.Round(zoom * 100)} %";
         ProseButton.IsChecked = !poemDisplay;
         PoemButton.IsChecked = poemDisplay;
         Editor.TextArea.TextView.Redraw();
@@ -356,6 +380,7 @@ public partial class MainWindow : Window
         switch (e.Key)
         {
             case Key.M when shift: StartComment(); e.Handled = true; break;
+            case Key.Oem5 or Key.OemBackslash: CollapseSidebarClick(this, e); e.Handled = true; break;
             case Key.C when shift: ToggleComments(); e.Handled = true; break;
             case Key.I when !shift: InspectorToggleClick(this, e); e.Handled = true; break;
             case Key.E when !shift: ExportClick(this, e); e.Handled = true; break;
@@ -453,7 +478,9 @@ public partial class MainWindow : Window
 
     void ShowSearch()
     {
+        if (SidebarCollapsed) CollapseSidebarClick(this, new RoutedEventArgs());
         SearchPanel.Visibility = Visibility.Visible;
+        UpdateRail();
         SearchBox.Focus();
         SearchBox.SelectAll();
     }
@@ -461,6 +488,7 @@ public partial class MainWindow : Window
     void HideSearch()
     {
         SearchPanel.Visibility = Visibility.Collapsed;
+        UpdateRail();
         Editor.TextArea.Focus();
     }
 
@@ -522,4 +550,63 @@ public partial class MainWindow : Window
             Editor.ScrollTo(loc.Line, loc.Column);
         }
     }
+
+    // MARK: Rail et barre latérale
+
+    bool SidebarCollapsed => SidebarColumn.Width.Value == 0;
+    GridLength sidebarWidth = new(280);
+
+    void CollapseSidebarClick(object sender, RoutedEventArgs e)
+    {
+        if (SidebarCollapsed)
+        {
+            SidebarColumn.MinWidth = 200;
+            SidebarColumn.Width = sidebarWidth;
+            ExpandSidebarButton.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            sidebarWidth = SidebarColumn.Width;
+            SidebarColumn.MinWidth = 0;
+            SidebarColumn.Width = new GridLength(0);
+            ExpandSidebarButton.Visibility = Visibility.Visible;
+        }
+        UpdateRail();
+    }
+
+    void RailBinderClick(object sender, RoutedEventArgs e)
+    {
+        if (SidebarCollapsed) CollapseSidebarClick(sender, e);
+        else if (SearchPanel.Visibility != Visibility.Visible) CollapseSidebarClick(sender, e);
+        if (SearchPanel.Visibility == Visibility.Visible) HideSearch();
+        UpdateRail();
+    }
+
+    void RailChangesClick(object sender, RoutedEventArgs e)
+    {
+        if (review != null) ExitReview();
+        else if (pendingChanges is > 0) EnterReview();
+        else SaveState.Text = pendingChanges == 0 ? "Instantané pris — aucune modification depuis." : "Pas d'instantané : « Envoyer à Claude » ou le menu … des commentaires en crée un.";
+        UpdateRail();
+    }
+
+    void UpdateRail()
+    {
+        RailBinder.IsChecked = !SidebarCollapsed && SearchPanel.Visibility != Visibility.Visible;
+        RailSearch.IsChecked = !SidebarCollapsed && SearchPanel.Visibility == Visibility.Visible;
+        RailComments.IsChecked = CommentsButton.IsChecked;
+        RailChanges.IsChecked = review != null;
+    }
+
+    void NewDocumentClick(object sender, RoutedEventArgs e) => Run(() => NewDocument(null));
+
+    void MoreClick(object sender, RoutedEventArgs e)
+    {
+        var menu = MoreButton.ContextMenu;
+        menu.PlacementTarget = MoreButton;
+        menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+        menu.IsOpen = true;
+    }
+
+    void ZoomResetMenuClick(object sender, RoutedEventArgs e) => SetZoom(1);
 }

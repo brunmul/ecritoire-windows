@@ -65,11 +65,11 @@ public partial class MainWindow
             icons.Items.Add(new Separator());
             foreach (var (id, label) in BinderIcons.Labels)
             {
-                var (glyph, color) = BinderIcons.For(id, false);
+                var (iconName, color) = BinderIcons.For(id, false);
                 var m = new MenuItem
                 {
                     Header = label, IsChecked = node.Icon == id,
-                    Icon = new TextBlock { Text = glyph, FontFamily = Glyphs, Foreground = color, FontSize = 14 },
+                    Icon = Icons.Make(iconName!, 16, color),
                 };
                 m.Click += (_, _) => Run(() => SetIcon(node, id));
                 icons.Items.Add(m);

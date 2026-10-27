@@ -12,21 +12,21 @@ public static class BinderIcons
         return b;
     }
 
-    public static readonly SolidColorBrush FolderBlue = Rgb(0x8DBEEB);
+    public static readonly SolidColorBrush FolderGray = Rgb(0x6B6B6B);
     public static readonly SolidColorBrush DocumentGray = Rgb(0x858585);
-    const string Book = "", Folder = "", Document = "";
 
-    static readonly Dictionary<string, (string Glyph, SolidColorBrush Color)> Catalog = new()
+    /// <summary>Identifiant du classeur → icône du pack (Ressources/Icones) et couleur.</summary>
+    static readonly Dictionary<string, (string Icon, SolidColorBrush Color)> Catalog = new()
     {
-        ["carnet-rouge"] = (Book, Rgb(0xE5937D)), ["carnet-orange"] = (Book, Rgb(0xEDAA6E)), ["carnet-jaune"] = (Book, Rgb(0xEFCD62)),
-        ["carnet-vert"] = (Book, Rgb(0x8CC57A)), ["carnet-bleu"] = (Book, Rgb(0x86B4E3)), ["carnet-violet"] = (Book, Rgb(0x9467BD)),
-        ["carnet-rose"] = (Book, Rgb(0xE07AA0)), ["carnet-brun"] = (Book, Rgb(0x9C6B45)), ["carnet-noir"] = (Book, Rgb(0x3D3929)),
-        ["notes"] = ("", Rgb(0x8A877C)), ["eprouvette"] = ("", Rgb(0xB48BDB)), ["crayon"] = ("", Rgb(0xD9A441)),
-        ["carte"] = ("", Rgb(0xD9776A)), ["classeur"] = ("", Rgb(0x9E9A90)), ["calendrier"] = ("", Rgb(0xD9534F)),
-        ["liminaire"] = ("", Rgb(0x8A877C)), ["pellicule"] = ("", Rgb(0x5B5B66)), ["spirale"] = (Book, Rgb(0x4A86C8)),
-        ["personnage"] = ("", Rgb(0xE8954A)), ["idee"] = ("", Rgb(0xE6B83A)), ["etoile"] = ("", Rgb(0xE6B83A)),
-        ["drapeau"] = ("", Rgb(0xD9534F)), ["epingle"] = ("", Rgb(0xD9534F)), ["manuscrit"] = (Book, Rgb(0x7B5FBF)),
-        ["recherche"] = ("", Rgb(0x4A86C8)),
+        ["carnet-rouge"] = ("book", Rgb(0xE5937D)), ["carnet-orange"] = ("book", Rgb(0xEDAA6E)), ["carnet-jaune"] = ("book", Rgb(0xE0B83A)),
+        ["carnet-vert"] = ("book", Rgb(0x7DB86A)), ["carnet-bleu"] = ("book", Rgb(0x6FA3D9)), ["carnet-violet"] = ("book", Rgb(0x9467BD)),
+        ["carnet-rose"] = ("book", Rgb(0xE07AA0)), ["carnet-brun"] = ("book", Rgb(0x9C6B45)), ["carnet-noir"] = ("book", Rgb(0x3D3929)),
+        ["notes"] = ("note", Rgb(0x8A877C)), ["eprouvette"] = ("flask", Rgb(0xB48BDB)), ["crayon"] = ("pencil", Rgb(0xD9A441)),
+        ["carte"] = ("map-pin", Rgb(0xD9776A)), ["classeur"] = ("tray", Rgb(0x9E9A90)), ["calendrier"] = ("calendar", Rgb(0xD9534F)),
+        ["liminaire"] = ("copy", Rgb(0x8A877C)), ["pellicule"] = ("video-camera", Rgb(0x5B5B66)), ["spirale"] = ("books", Rgb(0x4A86C8)),
+        ["personnage"] = ("id-card", Rgb(0xE8954A)), ["idee"] = ("lightbulb", Rgb(0xE6B83A)), ["etoile"] = ("star", Rgb(0xE6B83A)),
+        ["drapeau"] = ("flag", Rgb(0xD9534F)), ["epingle"] = ("bookmark", Rgb(0xD9534F)), ["manuscrit"] = ("scroll", Rgb(0x7B5FBF)),
+        ["recherche"] = ("binoculars", Rgb(0x4A86C8)),
     };
 
     /// <summary>Icônes proposées dans le menu du classeur, dans l'ordre de l'app macOS, avec leur nom.</summary>
@@ -40,9 +40,10 @@ public static class BinderIcons
         ("epingle", "Épingle"), ("manuscrit", "Manuscrit"), ("recherche", "Recherche"),
     };
 
-    public static (string Glyph, Brush Color) For(string? icon, bool isFolder)
+    /// <summary>Icône d'un élément : celle choisie, sinon un dossier au trait (les documents n'en ont pas, comme sur Mac).</summary>
+    public static (string? Icon, Brush Color) For(string? icon, bool isFolder)
     {
         if (icon != null && Catalog.TryGetValue(icon, out var hit)) return hit;
-        return isFolder ? (Folder, FolderBlue) : (Document, DocumentGray);
+        return isFolder ? ("folder", FolderGray) : (null, DocumentGray);
     }
 }

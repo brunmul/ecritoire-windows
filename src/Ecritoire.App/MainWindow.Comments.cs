@@ -51,6 +51,9 @@ public partial class MainWindow
         int open = comments.OpenCount;
         CommentsBadge.Visibility = open > 0 && current != null ? Visibility.Visible : Visibility.Collapsed;
         CommentsBadgeText.Text = open.ToString();
+        // Inspecteur : ajusté à son contenu ; commentaires : toute la hauteur.
+        RightPanel.VerticalAlignment = inspector ? VerticalAlignment.Top : VerticalAlignment.Stretch;
+        UpdateRail();
     }
 
     void CommentsToggleClick(object sender, RoutedEventArgs e) => ToggleComments();
@@ -83,7 +86,7 @@ public partial class MainWindow
         Editor.TextArea.TextView.Redraw();
         int open = comments.OpenCount, archived = comments.ArchivedCount;
         ArchiveBack.Visibility = showArchive ? Visibility.Visible : Visibility.Collapsed;
-        CommentsHeaderIcon.Text = showArchive ? "" : "";
+        CommentsHeaderIcon.Source = Icons.Drawing(showArchive ? "tray" : "comment", IconBrush, Icons.StrokeFor(17));
         CommentsHeader.Text = showArchive ? "Archives" : "Commentaires";
         int count = showArchive ? archived : open;
         CommentsCountPill.Visibility = count > 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -122,7 +125,7 @@ public partial class MainWindow
         if (visible.Count == 0 && draft == null)
         {
             var empty = new StackPanel { Margin = new Thickness(20, 40, 20, 0) };
-            empty.Children.Add(new TextBlock { Text = "", FontFamily = Glyphs, FontSize = 22, Foreground = Theme.Secondary, HorizontalAlignment = HorizontalAlignment.Center });
+            empty.Children.Add(new Image { Source = Icons.Drawing("comment", Theme.Secondary, Icons.StrokeFor(26)), Width = 26, Height = 26, HorizontalAlignment = HorizontalAlignment.Center });
             empty.Children.Add(new TextBlock
             {
                 Text = showArchive ? "Aucun commentaire archivé." : "Aucun commentaire en cours.\nSélectionnez un passage puis « Commenter » (Ctrl+Maj+M).",
@@ -133,7 +136,7 @@ public partial class MainWindow
     }
 
     static string S(int n) => n > 1 ? "s" : "";
-    FontFamily Glyphs => (FontFamily)FindResource("Glyphes");
+    static readonly SolidColorBrush IconBrush = Freeze(new SolidColorBrush(Color.FromRgb(0x5C, 0x5C, 0x5C)));
     static readonly SolidColorBrush CardBorder = Freeze(new SolidColorBrush(Color.FromRgb(0xE3, 0xDE, 0xEA)));
     static readonly SolidColorBrush SelectedCard = Freeze(new SolidColorBrush(Color.FromRgb(0xE9, 0xE2, 0xF7)));
     static readonly SolidColorBrush DeletedText = Freeze(new SolidColorBrush(Color.FromRgb(0xB3, 0x2E, 0x2E)));
@@ -158,9 +161,9 @@ public partial class MainWindow
         TextWrapping = TextWrapping.Wrap, MaxHeight = 36, TextTrimming = TextTrimming.CharacterEllipsis,
     };
 
-    Button SmallIcon(string glyph, string tip, Action action)
+    Button SmallIcon(string icon, string tip, Action action)
     {
-        var b = new Button { Content = glyph, ToolTip = tip, Style = (Style)FindResource("BoutonIcone"), Width = 26, Height = 24, FontSize = 12 };
+        var b = new Button { Content = Icons.Make(icon, 15, IconBrush), ToolTip = tip, Style = (Style)FindResource("BoutonIcone"), Width = 28, Height = 26 };
         b.Click += (_, e) => { e.Handled = true; action(); };
         return b;
     }
@@ -236,16 +239,16 @@ public partial class MainWindow
             Dispatcher.BeginInvoke(() => box.Focus(), System.Windows.Threading.DispatcherPriority.Input);
         }
         var tools = new DockPanel { Margin = new Thickness(0, 6, 0, 0) };
-        var trash = SmallIcon("", "Supprimer", () => { comments.Delete(c.Id, Editor.Text); RefreshComments(); });
+        var trash = SmallIcon("trash", "Supprimer", () => { comments.Delete(c.Id, Editor.Text); RefreshComments(); });
         DockPanel.SetDock(trash, Dock.Right);
         tools.Children.Add(trash);
         var left = new StackPanel { Orientation = Orientation.Horizontal };
         if (c.IsArchived)
-            left.Children.Add(SmallIcon("", "Restaurer : redevient un commentaire en cours", () => { comments.Restore(c.Id, Editor.Text); RefreshComments(); }));
+            left.Children.Add(SmallIcon("restore", "Restaurer : redevient un commentaire en cours", () => { comments.Restore(c.Id, Editor.Text); RefreshComments(); }));
         else
         {
-            left.Children.Add(SmallIcon("", "Répondre", () => { replyingTo = c.Id; selectedComment = c.Id; RefreshComments(); }));
-            left.Children.Add(SmallIcon("", "Résolu : ranger dans les archives", () => { comments.ToggleResolved(c.Id, Editor.Text); RefreshComments(); }));
+            left.Children.Add(SmallIcon("reply", "Répondre", () => { replyingTo = c.Id; selectedComment = c.Id; RefreshComments(); }));
+            left.Children.Add(SmallIcon("check", "Résolu : ranger dans les archives", () => { comments.ToggleResolved(c.Id, Editor.Text); RefreshComments(); }));
         }
         tools.Children.Add(left);
         panel.Children.Add(tools);

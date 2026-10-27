@@ -36,6 +36,7 @@
     <!-- Polices libres de repli (licence SIL OFL). -->
     <Resource Include="Polices\*.ttf" />
     <Resource Include="Ressources\Icone.png" />
+    <Resource Include="Ressources\Icones\*.svg" />
     <!-- Walbaum (police payante) : seulement pour une construction personnelle, depuis Local/Polices (ignoré par git). -->
     <Resource Include="..\..\Local\Polices\*.ttf;..\..\Local\Polices\*.otf" Condition="Exists('..\..\Local\Polices')">
       <Link>Polices\%(Filename)%(Extension)</Link>
