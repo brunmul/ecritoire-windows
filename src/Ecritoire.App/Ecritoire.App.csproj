@@ -11,9 +11,10 @@
     <AssemblyName>Ecritoire</AssemblyName>
     <RootNamespace>Ecritoire.App</RootNamespace>
     <Product>Écritoire</Product>
-    <Version>0.2.0</Version>
+    <Version>0.2.1</Version>
     <Copyright>GPL-3.0-or-later</Copyright>
     <ApplicationIcon>Ressources\Ecritoire.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- Un seul fichier .exe autonome (aucun .NET à installer sur le PC). -->
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>
