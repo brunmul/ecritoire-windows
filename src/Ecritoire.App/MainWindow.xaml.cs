@@ -33,6 +33,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        SourceInitialized += (_, _) => TintTitleBar();
         look = new MarkdownLook(Editor);
         var o = Editor.Options;
         o.EnableHyperlinks = false;

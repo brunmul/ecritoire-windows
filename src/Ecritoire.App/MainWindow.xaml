@@ -8,7 +8,7 @@
         Background="White" FontFamily="{StaticResource Interface}" FontSize="13.5"
         Foreground="{StaticResource Texte}" UseLayoutRounding="True" TextOptions.TextFormattingMode="Ideal">
     <!-- Interface v2 de l'app macOS : rail d'icônes, barre latérale claire, page blanche sans cadre, panneau de droite flottant. -->
-    <Grid>
+    <Grid Background="{StaticResource Cadre}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="56"/>
             <ColumnDefinition x:Name="SidebarColumn" Width="280" MinWidth="200"/>
@@ -16,14 +16,14 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- Rail d'icônes -->
-        <Border Grid.Column="0" Background="{StaticResource Panneau}">
+        <!-- Rail d'icônes, sur le cadre teinté qu'il partage avec la barre de titre -->
+        <Border Grid.Column="0" Background="Transparent">
             <DockPanel Margin="0,14,0,14">
                 <StackPanel DockPanel.Dock="Bottom" HorizontalAlignment="Center">
-                    <Button Style="{StaticResource BoutonIcone}" Width="36" Height="36" Margin="0,0,0,6" Click="ExportClick" ToolTip="Exporter en PDF ou en Markdown… (Ctrl+E)">
+                    <Button Style="{StaticResource BoutonCadre}" Width="36" Height="36" Margin="0,0,0,6" Click="ExportClick" ToolTip="Exporter en PDF ou en Markdown… (Ctrl+E)">
                         <Image Source="{local:Icon share, Size=20}" Width="20" Height="20"/>
                     </Button>
-                    <Button Style="{StaticResource BoutonIcone}" Width="36" Height="36" Click="OpenBinderClick" ToolTip="Ouvrir un classeur… (Ctrl+O)">
+                    <Button Style="{StaticResource BoutonCadre}" Width="36" Height="36" Click="OpenBinderClick" ToolTip="Ouvrir un classeur… (Ctrl+O)">
                         <Image Source="{local:Icon folder, Size=20}" Width="20" Height="20"/>
                     </Button>
                 </StackPanel>
@@ -44,8 +44,8 @@
             </DockPanel>
         </Border>
 
-        <!-- Barre latérale : classeur ou recherche -->
-        <Border Grid.Column="1" Background="{StaticResource Panneau}">
+        <!-- Barre latérale : classeur ou recherche, plus claire que le cadre, coin arrondi sous la barre de titre -->
+        <Border Grid.Column="1" Background="{StaticResource Panneau}" CornerRadius="12,0,0,0">
             <DockPanel>
                 <DockPanel DockPanel.Dock="Top" Height="56" Margin="16,10,10,0" LastChildFill="False">
                     <Button DockPanel.Dock="Right" Style="{StaticResource BoutonIcone}" Click="CollapseSidebarClick" ToolTip="Masquer la barre latérale (Ctrl+\)">
@@ -150,7 +150,7 @@
                 </Grid>
             </DockPanel>
         </Border>
-        <GridSplitter x:Name="SidebarSplitter" Grid.Column="2" Width="4" Background="Transparent" HorizontalAlignment="Center" VerticalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
+        <GridSplitter x:Name="SidebarSplitter" Grid.Column="2" Width="4" Background="{StaticResource Panneau}" HorizontalAlignment="Center" VerticalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
 
         <!-- Zone d'écriture -->
         <DockPanel Grid.Column="3" x:Name="MainArea" Background="White">

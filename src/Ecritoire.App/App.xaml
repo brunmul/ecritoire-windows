@@ -4,8 +4,12 @@
              xmlns:local="clr-namespace:Ecritoire.App"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-        <!-- Palette de l'app macOS (Theme.swift) -->
-        <SolidColorBrush x:Key="Panneau" Color="#F9F9F9"/>
+        <!-- Teintes douces façon ChatGPT : cadre vert-gris pâle (barre de titre et rail d'icônes d'un seul tenant),
+             barre latérale plus claire de la même teinte, page blanche. -->
+        <SolidColorBrush x:Key="Cadre" Color="#E8ECE6"/>
+        <SolidColorBrush x:Key="SurvolCadre" Color="#DDE2DA"/>
+        <SolidColorBrush x:Key="SelectionCadre" Color="#D3D9D0"/>
+        <SolidColorBrush x:Key="Panneau" Color="#F5F7F3"/>
         <SolidColorBrush x:Key="Bureau" Color="#FFFFFF"/>
         <SolidColorBrush x:Key="Entete" Color="#FFFFFF"/>
         <SolidColorBrush x:Key="Page" Color="#FFFFFF"/>
@@ -13,8 +17,8 @@
         <SolidColorBrush x:Key="Texte" Color="#1F1F1F"/>
         <SolidColorBrush x:Key="TexteSecondaire" Color="#8A8A8A"/>
         <SolidColorBrush x:Key="Accent" Color="#7B5FBF"/>
-        <SolidColorBrush x:Key="Selection" Color="#ECECEC"/>
-        <SolidColorBrush x:Key="Survol" Color="#F0F0F0"/>
+        <SolidColorBrush x:Key="Selection" Color="#E7EBE4"/>
+        <SolidColorBrush x:Key="Survol" Color="#EEF1EC"/>
         <SolidColorBrush x:Key="Icone" Color="#5C5C5C"/>
         <FontFamily x:Key="Interface">Segoe UI Variable Text, Segoe UI</FontFamily>
         <FontFamily x:Key="Glyphes">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
@@ -157,11 +161,45 @@
             </Setter>
         </Style>
 
-        <!-- Bouton du rail d'icônes. -->
+        <!-- Bouton du rail d'icônes, sur le cadre teinté : survol et sélection un ton plus soutenus. -->
         <Style x:Key="BoutonRail" TargetType="ToggleButton" BasedOn="{StaticResource BoutonBascule}">
             <Setter Property="Width" Value="36"/>
             <Setter Property="Height" Value="36"/>
             <Setter Property="Margin" Value="0,0,0,6"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Fond" Background="{TemplateBinding Background}" CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Fond" Property="Background" Value="{StaticResource SurvolCadre}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Fond" Property="Background" Value="{StaticResource SelectionCadre}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <!-- Bouton à icône posé sur le cadre teinté (bas du rail). -->
+        <Style x:Key="BoutonCadre" TargetType="Button" BasedOn="{StaticResource BoutonIcone}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Fond" Background="{TemplateBinding Background}" CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Fond" Property="Background" Value="{StaticResource SurvolCadre}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <!-- Bouton plat (texte), coins arrondis. -->
