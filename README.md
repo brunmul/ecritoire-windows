@@ -37,10 +37,10 @@ l'installateur est téléchargé, lancé sans questions, et Écritoire se rouvre
 
 ## Polices
 
-Les versions publiques embarquent deux polices libres : Libre Bodoni et Hanken Grotesk (licence SIL Open Font License,
-dans `src/Ecritoire.App/Polices`). Walbaum et Walbaum Grotesk sont payantes et ne sont jamais distribuées : l'app les
-prend sur le PC, dans `%LOCALAPPDATA%\Ecritoire\Polices personnelles` (ou installées dans Windows), ce qui survit aux
-mises à jour. Une construction personnelle peut aussi les embarquer depuis `Local/Polices` (dossier ignoré par git).
+L'app embarque deux polices libres (licence SIL Open Font License, dans `src/Ecritoire.App/Polices`) : Libre Bodoni,
+une didone de texte, pour la page et les titres, et Hanken Grotesk pour l'interface et les sous-titres. Elles sont
+choisies dans l'esprit des typographies du Monde diplomatique et des éditions La Fabrique. Aucune police payante n'est
+utilisée ni distribuée.
 
 ## Compatibilité avec l'app macOS
 

@@ -27,45 +27,11 @@ public static class Theme
 
     static readonly Uri Base = new("pack://application:,,,/");
 
-    /// <summary>
-    /// Polices personnelles (Walbaum, payante) : posées par l'utilisateur dans %LOCALAPPDATA%\Ecritoire\Polices personnelles,
-    /// jamais dans l'exe ni dans le dépôt. Elles survivent ainsi aux mises à jour, qui installent la version publique.
-    /// </summary>
-    public static readonly string PersonalFonts =
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ecritoire", "Polices personnelles");
-
-    static HashSet<string> NamesIn(Uri location)
+    /// <summary>Police libre embarquée dans l'app (licence SIL OFL) ; Georgia si elle ne se charge pas.</summary>
+    static FontFamily Embedded(string name)
     {
-        try
-        {
-            return Fonts.GetFontFamilies(location)
-                .SelectMany(f => f.FamilyNames.Values.Append(f.Source.Split('#').Last())).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        }
-        catch (Exception e) { App.Log(e); return new(); }
-    }
-
-    static readonly Lazy<HashSet<string>> PersonalNames = new(() =>
-        Directory.Exists(PersonalFonts) ? NamesIn(new Uri(PersonalFonts + Path.DirectorySeparatorChar)) : new());
-    static readonly Lazy<HashSet<string>> SystemNames = new(() =>
-        Fonts.SystemFontFamilies.SelectMany(f => f.FamilyNames.Values).ToHashSet(StringComparer.OrdinalIgnoreCase));
-
-    /// <summary>Première police trouvée : polices personnelles, polices installées dans Windows, polices embarquées
-    /// (Walbaum dans une construction personnelle) ; sinon la police libre de repli.</summary>
-    static FontFamily Pick(params string[] names)
-    {
-        try
-        {
-            var embedded = NamesIn(new Uri(Base, "./Polices/"));
-            foreach (var name in names)
-            {
-                if (PersonalNames.Value.Contains(name)) return new FontFamily(new Uri(PersonalFonts + Path.DirectorySeparatorChar), "./#" + name);
-                if (name.Contains("Walbaum") && SystemNames.Value.Contains(name)) return new FontFamily(name);
-                if (embedded.Contains(name)) return new FontFamily(Base, "./Polices/#" + name);
-            }
-        }
-        catch (Exception e) { App.Log(e); }
-        // Repli sûr : police libre embarquée, sinon police du système.
-        try { return new FontFamily(Base, "./Polices/#" + names[^1] + ", Georgia"); } catch { return new FontFamily("Georgia"); }
+        try { return new FontFamily(Base, "./Polices/#" + name); }
+        catch (Exception e) { App.Log(e); return new FontFamily("Georgia"); }
     }
 
     static string? fontsOnDisk;
@@ -126,18 +92,19 @@ public static class Theme
         catch (Exception e) { App.Log(e); return family; }
     }
 
-    static readonly FontFamily SerifFace = Pick("Walbaum 10 XL Pro", "Libre Bodoni");
-    /// <summary>Texte : Walbaum 10 XL (repli : Libre Bodoni), interligne de lecture confortable (1,5).</summary>
+    // Polices libres dans l'esprit du Monde diplomatique (Walbaum, Walbaum Grotesk) et de La Fabrique (Centennial) :
+    // une didone de texte, Libre Bodoni, et une grotesque, Hanken Grotesk.
+    static readonly FontFamily SerifFace = Embedded("Libre Bodoni");
+    /// <summary>Texte : Libre Bodoni, interligne de lecture confortable (1,5).</summary>
     public static readonly FontFamily Serif = WithLineSpacing(SerifFace, 1.5);
     /// <summary>Lignes vides entre les paragraphes : plus basses qu'une ligne de texte, comme l'espace entre paragraphes
     /// de l'app macOS (sinon chaque paragraphe serait suivi d'une ligne entière).</summary>
     public static readonly FontFamily ParagraphGap = WithLineSpacing(SerifFace, 0.8);
-    /// <summary>Grands titres : Walbaum 120 (repli : Libre Bodoni).</summary>
-    public static readonly FontFamily Display = Pick("Walbaum 120 Pro", "Walbaum 10 XL Pro", "Libre Bodoni");
-    /// <summary>Sous-titres, intro, citations : Walbaum Grotesk (repli : Hanken Grotesk).</summary>
-    public static readonly FontFamily Grotesk = Pick("WalbaumGrotesk Book", "Hanken Grotesk");
-    public static readonly FontFamily GroteskBlack = Pick("WalbaumGrotesk Black", "WalbaumGrotesk Book", "Hanken Grotesk");
-    public static bool HasWalbaum => SerifFace.Source.Contains("Walbaum");
+    /// <summary>Grands titres : Libre Bodoni.</summary>
+    public static readonly FontFamily Display = SerifFace;
+    /// <summary>Sous-titres, intro, citations, interface : Hanken Grotesk.</summary>
+    public static readonly FontFamily Grotesk = Embedded("Hanken Grotesk");
+    public static readonly FontFamily GroteskBlack = Grotesk;
 
     /// <summary>Corps du texte (19 pt dans l'app macOS) et largeur de colonne (600, 540 pour un poème).</summary>
     public const double BaseFontSize = 19, BaseColumn = 600, BasePoemColumn = 540, BasePagePadding = 72;

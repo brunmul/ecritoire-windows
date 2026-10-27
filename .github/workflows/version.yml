@@ -4,8 +4,7 @@
 # Pour publier : pousser une étiquette « vX.Y.Z » (par exemple git tag v0.3.0 && git push origin v0.3.0).
 # Lancement à la main (onglet Actions) : construit et garde l'installateur comme artefact, sans rien publier.
 #
-# Jamais de police payante : Walbaum n'est pas dans le dépôt (dossier Local/ ignoré) ; la version publique utilise les
-# polices libres, et l'app charge Walbaum depuis %LOCALAPPDATA%\Ecritoire\Polices personnelles sur le PC de l'auteur.
+# Jamais de police payante : l'app n'utilise que des polices libres (Libre Bodoni, Hanken Grotesk).
 
 name: Version Windows
 

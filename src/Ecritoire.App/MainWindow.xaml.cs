@@ -62,7 +62,7 @@ public partial class MainWindow : Window
         searchTimer.Tick += (_, _) => { searchTimer.Stop(); RunSearch(); };
         treeTimer.Tick += (_, _) => { treeTimer.Stop(); ReloadTree(); };
         WelcomeTitle.FontFamily = Theme.Display;
-        // Police d'interface de l'app macOS : Walbaum Grotesk (repli : Hanken Grotesk).
+        // Police d'interface : Hanken Grotesk.
         FontFamily = Theme.Grotesk;
         EditorArea.SizeChanged += (_, _) => ApplyLayout();
         RightPanel.IsVisibleChanged += (_, _) => ApplyLayout();

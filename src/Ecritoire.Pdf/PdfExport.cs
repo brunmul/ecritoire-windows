@@ -33,15 +33,10 @@ public static class PdfExport
     static readonly object FontLock = new();
     static bool fontsReady;
     static string serif = "Libre Bodoni", display = "Libre Bodoni", grotesk = "Hanken Grotesk", groteskBlack = "Hanken Grotesk";
-    static bool blackIsFamily;
 
-    /// <summary>Fichiers de polices cherchés (Walbaum si présente, sinon polices libres SIL OFL).</summary>
+    /// <summary>Fichiers de polices embarqués (polices libres SIL OFL).</summary>
     public static readonly string[] FontFiles =
     {
-        "Walbaum10XLPro.ttf", "Walbaum10XLPro-Bold.ttf", "Walbaum10XLPro-Italic.ttf", "Walbaum10XLPro-BoldItalic.ttf",
-        "Walbaum120Pro.ttf", "Walbaum120Pro-Bold.ttf", "Walbaum120Pro-Italic.ttf", "Walbaum120Pro-BoldItalic.ttf",
-        "WalbaumGroteskBook.otf", "WalbaumGroteskBook-Bold.otf", "WalbaumGroteskBook-Italic.otf", "WalbaumGroteskBook-BoldItalic.otf",
-        "WalbaumGroteskBlack.otf", "WalbaumGroteskBlack-Italic.otf",
         "LibreBodoni.ttf", "LibreBodoni-Italic.ttf", "HankenGrotesk.ttf", "HankenGrotesk-Italic.ttf",
     };
 
@@ -52,11 +47,10 @@ public static class PdfExport
         {
             if (fontsReady) return;
             QuestPDF.Settings.License = LicenseType.Community;
-            // Polices du système : seulement en repli (emoji, symboles comme ⌘ absents de Walbaum).
+            // Polices du système : seulement en repli (emoji, symboles comme ⌘ absents des polices embarquées).
             QuestPDF.Settings.UseSystemFonts = true;
             QuestPDF.Settings.ThrowOnMissingFontFamilies = false;
             QuestPDF.Settings.ThrowOnMissingTextGlyphs = false;
-            var found = new HashSet<string>();
             foreach (var file in FontFiles)
             {
                 using var s = open(file);
@@ -64,25 +58,12 @@ public static class PdfExport
                 using var copy = new MemoryStream();
                 s.CopyTo(copy);
                 FontManager.RegisterFontFromBinaryData(copy.ToArray());
-                found.Add(file);
             }
             var families = FontManager.GetRegisteredFonts().Select(f => f.FamilyName).Distinct().ToList();
-            string? Find(params string[] parts) =>
-                families.FirstOrDefault(f => parts.All(p => f.Replace(" ", "").Contains(p, StringComparison.OrdinalIgnoreCase)));
-            if (found.Contains("Walbaum10XLPro.ttf") && Find("Walbaum", "10") is { } s10)
-            {
-                serif = s10;
-                display = Find("Walbaum", "120") ?? s10;
-                grotesk = Find("WalbaumGrotesk") is { } g && !g.Contains("Black", StringComparison.OrdinalIgnoreCase) ? g
-                    : families.FirstOrDefault(f => f.Contains("Grotesk", StringComparison.OrdinalIgnoreCase) && !f.Contains("Black", StringComparison.OrdinalIgnoreCase)) ?? grotesk;
-                if (Find("Grotesk", "Black") is { } b) { groteskBlack = b; blackIsFamily = true; }
-                else groteskBlack = grotesk;
-            }
-            else
-            {
-                serif = display = Find("LibreBodoni") ?? serif;
-                grotesk = groteskBlack = Find("HankenGrotesk") ?? grotesk;
-            }
+            string? Find(string part) =>
+                families.FirstOrDefault(f => f.Replace(" ", "").Contains(part, StringComparison.OrdinalIgnoreCase));
+            serif = display = Find("LibreBodoni") ?? serif;
+            grotesk = groteskBlack = Find("HankenGrotesk") ?? grotesk;
             fontsReady = true;
         }
     }
@@ -364,7 +345,7 @@ public static class PdfExport
             {
                 s = s.FontFamily(FamilyName(p.Family)).FontSize(size).FontColor(p.Color).LineHeight(lineHeight);
                 if (p.Bold) s = p.Family == Family.GroteskBlack ? s : s.Bold();
-                if (p.Family == Family.GroteskBlack) s = blackIsFamily ? s : s.Black();
+                if (p.Family == Family.GroteskBlack) s = s.Black();
                 if (p.SmallCaps) s = s.EnableFontFeature("smcp");
                 if (p.LetterSpacing > 0) s = s.LetterSpacing(p.LetterSpacing / size);
                 return s;

@@ -11,7 +11,7 @@
     <AssemblyName>Ecritoire</AssemblyName>
     <RootNamespace>Ecritoire.App</RootNamespace>
     <Product>Écritoire</Product>
-    <Version>0.3.0</Version>
+    <Version>0.3.1</Version>
     <Copyright>GPL-3.0-or-later</Copyright>
     <ApplicationIcon>Ressources\Ecritoire.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -33,14 +33,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Polices libres de repli (licence SIL OFL). -->
+    <!-- Polices libres (licence SIL OFL) : Libre Bodoni et Hanken Grotesk. -->
     <Resource Include="Polices\*.ttf" />
     <Resource Include="Ressources\Icone.png" />
     <Resource Include="Ressources\Icones\*.svg" />
-    <!-- Walbaum (police payante) : seulement pour une construction personnelle, depuis Local/Polices (ignoré par git). -->
-    <Resource Include="..\..\Local\Polices\*.ttf;..\..\Local\Polices\*.otf" Condition="Exists('..\..\Local\Polices')">
-      <Link>Polices\%(Filename)%(Extension)</Link>
-    </Resource>
   </ItemGroup>
 
 </Project>

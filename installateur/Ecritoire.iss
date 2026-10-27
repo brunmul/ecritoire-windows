@@ -1,9 +1,8 @@
 ﻿; Installateur d'Écritoire pour Windows (Inno Setup 6).
 ; Construit par GitHub Actions (.github/workflows/version.yml) à partir de publish\Ecritoire.exe :
-;   ISCC.exe /DAppVersion=0.3.0 installateur\Ecritoire.iss
+;   ISCC.exe /DAppVersion=0.3.1 installateur\Ecritoire.iss
 ; Installation pour l'utilisateur seul (sans droits administrateur), dans %LOCALAPPDATA%\Programs\Ecritoire, pour que
-; la mise à jour automatique puisse se faire sans question. Les réglages (%APPDATA%\Ecritoire) et les polices
-; personnelles (%LOCALAPPDATA%\Ecritoire\Polices personnelles) ne sont jamais touchés.
+; la mise à jour automatique puisse se faire sans question. Les réglages (%APPDATA%\Ecritoire) ne sont jamais touchés.
 
 #ifndef AppVersion
   #define AppVersion "0.0.0"

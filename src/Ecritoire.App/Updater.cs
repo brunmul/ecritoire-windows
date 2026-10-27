@@ -13,7 +13,7 @@ namespace Ecritoire.App;
 /// </summary>
 public static class Updater
 {
-    /// <summary>Dépôt public dont les releases (sans Walbaum) sont le seul endroit où l'app cherche ses nouvelles versions.</summary>
+    /// <summary>Dépôt public dont les releases sont le seul endroit où l'app cherche ses nouvelles versions.</summary>
     public const string Repository = "brunmul/ecritoire-windows";
 
     public sealed record Release(Version Version, string Tag, string InstallerUrl, string Notes);
