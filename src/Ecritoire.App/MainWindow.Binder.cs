@@ -208,6 +208,9 @@ public partial class MainWindow
         pendingChanges = null;
         UpdateChangesUI();
         UpdateInspector();
+        RebuildOutline();
+        RefreshRecents();
+        UpdateAiBar();
     }
 
     void RebuildIndex()

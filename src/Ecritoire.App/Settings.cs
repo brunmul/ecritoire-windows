@@ -14,6 +14,10 @@ public sealed class Settings
     public bool CommentsPanelVisible { get; set; } = true;
     public bool InspectorVisible { get; set; }
     public string? ExportFolder { get; set; }
+    /// <summary>Derniers documents ouverts (tous classeurs confondus, le plus récent d'abord).</summary>
+    public List<string> RecentDocuments { get; set; } = new();
+    public bool AiBarVisible { get; set; } = true;
+    public bool OutlineVisible { get; set; } = true;
 
     static string FilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ecritoire", "reglages.json");
 

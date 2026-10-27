@@ -66,6 +66,8 @@ public partial class MainWindow : Window
         FontFamily = Theme.Grotesk;
         EditorArea.SizeChanged += (_, _) => ApplyLayout();
         RightPanel.IsVisibleChanged += (_, _) => ApplyLayout();
+        InitOutline();
+        InitAi();
         PreviewKeyDown += Shortcuts;
         Loaded += (_, _) =>
         {
@@ -238,6 +240,10 @@ public partial class MainWindow : Window
         UpdateChangesUI();
         RefreshPendingChanges();
         UpdateInspector();
+        RememberRecent(path);
+        RebuildOutline();
+        RefreshLinks(force: true);
+        UpdateAiBar();
         Editor.TextArea.Focus();
     }
 
@@ -284,6 +290,7 @@ public partial class MainWindow : Window
             SaveState.Text = "✓ Enregistré";
             if (comments.All.Count > 0) comments.Persist(wanted);
             if (pendingChanges != null) RefreshPendingChanges();
+            if (settings.InspectorVisible) ShowOutgoingLinks();
         }
         catch (Exception ex)
         {
@@ -344,11 +351,16 @@ public partial class MainWindow : Window
         // place laissée par le panneau de droite flottant.
         double width = EditorArea.ActualWidth > 0 ? EditorArea.ActualWidth : 900;
         double panel = RightPanel.Visibility == Visibility.Visible ? RightPanel.Width + 24 : 0;
-        double scrollbar = SystemParameters.VerticalScrollBarWidth;
+        const double scrollbar = 10; // barre fine (App.xaml)
         double available = Math.Max(column + 48, width - panel - scrollbar);
         double left = Math.Max(24, Math.Round((available - column) / 2));
         double right = Math.Max(24, width - scrollbar - left - column);
         Editor.Padding = new Thickness(Math.Max(0, left - gutter), Math.Round(28 * zoom), right, 0);
+        // Réglette à gauche de la colonne (et des numéros de versets) ; barre IA centrée sous la colonne.
+        OutlineRuler.Margin = new Thickness(Math.Max(4, left - gutter - 58), 0, 0, 0);
+        double bar = Math.Min(column + 40, available - 24);
+        AiBar.Width = bar;
+        AiBar.Margin = new Thickness(Math.Max(12, left + column / 2 - bar / 2), 0, 0, 18);
         ZoomLabel.Text = Math.Abs(zoom - 1) < 0.001 ? "" : $"{Math.Round(zoom * 100)} %";
         ProseButton.IsChecked = !poemDisplay;
         PoemButton.IsChecked = poemDisplay;

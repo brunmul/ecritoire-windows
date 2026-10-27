@@ -25,7 +25,18 @@ public partial class MainWindow
         {
             ("01-vue-generale", () => OpenProbeDocument("À propos.md")),
             ("02-image", () => { OpenProbeDocument("Discours de la méthode.md"); Editor.ScrollToEnd(); }),
-            ("03-inspecteur", () => { settings.InspectorVisible = true; UpdateInspector(); }),
+            ("03-inspecteur", () => { OpenProbeDocument("Personnages.md"); settings.InspectorVisible = true; UpdateInspector(); }),
+            ("03b-reglette", () =>
+            {
+                settings.InspectorVisible = false; UpdateInspector();
+                OpenProbeDocument("Discours de la méthode.md");
+                Dispatcher.BeginInvoke(() =>
+                {
+                    if (outline.Count > 2) ScrollToLine(outline[1].Line);
+                    if (OutlineRuler.Children.Count > 2) ShowOutlinePreview(2, (FrameworkElement)OutlineRuler.Children[2]);
+                }, DispatcherPriority.ApplicationIdle);
+            }),
+            ("03c-barre-ia", () => { OutlinePopup.IsOpen = false; Editor.Select(60, 80); AiBox.Text = "Resserre ce passage sans changer le sens"; }),
             ("04-commentaires", () =>
             {
                 settings.InspectorVisible = false;
@@ -71,6 +82,12 @@ public partial class MainWindow
             {
                 dc.DrawRectangle(Brushes.White, null, new Rect(0, 0, content.ActualWidth, content.ActualHeight));
                 dc.DrawRectangle(new VisualBrush(content), null, new Rect(0, 0, content.ActualWidth, content.ActualHeight));
+                // Les fenêtres surgissantes (aperçu de la réglette) ne font pas partie du contenu : on les ajoute à leur place.
+                if (OutlinePopup.IsOpen && OutlinePopup.Child is FrameworkElement card && card.IsVisible)
+                {
+                    var at = card.PointToScreen(new Point(0, 0)) - content.PointToScreen(new Point(0, 0));
+                    dc.DrawRectangle(new VisualBrush(card), null, new Rect(at.X / dpi.DpiScaleX, at.Y / dpi.DpiScaleY, card.ActualWidth, card.ActualHeight));
+                }
             }
             bitmap.Render(visual);
             var encoder = new PngBitmapEncoder();

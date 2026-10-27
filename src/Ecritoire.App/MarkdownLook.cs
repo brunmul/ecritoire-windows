@@ -387,11 +387,19 @@ public sealed class MarkdownLook
                     // Pas de signe en tête : le premier caractère est dessiné après l'espace.
                     var ch = text[..(char.IsHighSurrogate(text[0]) && text.Length > 1 ? 2 : 1)];
                     var face = look.Face(family, bold);
-                    pending.Add((offset, ch.Length, () => new InlineObjectElement(ch.Length, new StackPanel
+                    // Ligne de base du caractère : sans elle, l'élément s'aligne par son bas et la lettre remonte.
+                    double baseline = new FormattedText(ch, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, face, size, Brushes.Black,
+                                                        VisualTreeHelper.GetDpi(look.Editor).PixelsPerDip).Baseline;
+                    pending.Add((offset, ch.Length, () =>
                     {
-                        Orientation = Orientation.Horizontal,
-                        Children = { new Border { Width = pad }, new TextBlock { Text = ch, FontFamily = family, FontSize = size, Foreground = Theme.Secondary, FontWeight = face.Weight } },
-                    })));
+                        var first = new StackPanel
+                        {
+                            Orientation = Orientation.Horizontal,
+                            Children = { new Border { Width = pad }, new TextBlock { Text = ch, FontFamily = family, FontSize = size, Foreground = Theme.Secondary, FontWeight = face.Weight } },
+                        };
+                        TextBlock.SetBaselineOffset(first, baseline);
+                        return new InlineObjectElement(ch.Length, first);
+                    }));
                     spans = spans.Where(s => s.Start >= ch.Length).ToList();
                 }
             }

@@ -54,6 +54,10 @@ public partial class MainWindow
         // Inspecteur : ajusté à son contenu ; commentaires : toute la hauteur.
         RightPanel.VerticalAlignment = inspector ? VerticalAlignment.Top : VerticalAlignment.Stretch;
         UpdateRail();
+        if (inspector) RefreshLinks();
+        UpdateAiBar();
+        // La réglette s'efface pendant la relecture des modifications.
+        OutlineRuler.Visibility = settings.OutlineVisible && outline.Count >= 2 && review == null && current != null ? Visibility.Visible : Visibility.Collapsed;
     }
 
     void CommentsToggleClick(object sender, RoutedEventArgs e) => ToggleComments();
@@ -177,7 +181,7 @@ public partial class MainWindow
         head.Children.Add(Quote(s + l <= Editor.Document.TextLength ? Editor.Document.GetText(s, l) : ""));
         panel.Children.Add(head);
         draftBox = new TextBox { AcceptsReturn = false, TextWrapping = TextWrapping.Wrap, MinHeight = 44, MaxHeight = 160, Padding = new Thickness(6), Margin = new Thickness(0, 8, 0, 8), BorderBrush = Theme.Accent, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
-        var commit = new Button { Content = "Commenter", Padding = new Thickness(10, 3, 10, 3), IsEnabled = false, Background = Theme.Accent, Foreground = Brushes.White, BorderThickness = new Thickness(0) };
+        var commit = new Button { Content = "Commenter", Style = (Style)FindResource("BoutonAccent"), IsEnabled = false };
         draftBox.TextChanged += (_, _) => commit.IsEnabled = draftBox.Text.Trim().Length > 0;
         draftBox.KeyDown += (_, e) =>
         {
@@ -186,7 +190,7 @@ public partial class MainWindow
         };
         panel.Children.Add(draftBox);
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
-        var cancel = new Button { Content = "Annuler", Padding = new Thickness(10, 3, 10, 3), Margin = new Thickness(0, 0, 6, 0) };
+        var cancel = new Button { Content = "Annuler", Style = (Style)FindResource("BoutonPlat"), Margin = new Thickness(0, 0, 6, 0) };
         cancel.Click += (_, _) => CancelDraft();
         commit.Click += (_, _) => CommitDraft();
         buttons.Children.Add(cancel);

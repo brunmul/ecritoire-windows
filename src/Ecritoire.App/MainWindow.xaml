@@ -82,6 +82,11 @@
                                 <TextBlock Text="Nouveau document" FontSize="14.5" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
+                        <!-- Récents : derniers documents ouverts dans ce classeur -->
+                        <StackPanel DockPanel.Dock="Top" x:Name="RecentsSection" Visibility="Collapsed">
+                            <TextBlock Text="Récents" Foreground="{StaticResource TexteSecondaire}" FontSize="13" Margin="18,10,0,4"/>
+                            <StackPanel x:Name="RecentsList" Margin="6,0,6,0"/>
+                        </StackPanel>
                         <TextBlock DockPanel.Dock="Top" Text="Classeur" Foreground="{StaticResource TexteSecondaire}" FontSize="13" Margin="18,10,0,6"/>
                         <TreeView x:Name="Tree" Background="Transparent" BorderThickness="0" Padding="0,0,0,12"
                                   SelectedItemChanged="TreeSelectionChanged" AllowDrop="True" ContextMenuOpening="TreeContextMenuOpening"
@@ -178,6 +183,11 @@
                         <Button.ContextMenu>
                             <ContextMenu>
                                 <MenuItem Header="Exporter…" InputGestureText="Ctrl+E" Click="ExportClick"/>
+                                <MenuItem Header="Commenter la sélection" InputGestureText="Ctrl+Maj+M" Click="CommentClick"/>
+                                <MenuItem Header="Créer un instantané (point de comparaison)" Click="TakeSnapshotClick"/>
+                                <Separator/>
+                                <MenuItem x:Name="AiBarItem" Header="Barre « Demander à l'IA »" IsCheckable="True" Click="AiBarToggleClick"/>
+                                <MenuItem x:Name="OutlineItem" Header="Réglette des titres" IsCheckable="True" Click="OutlineToggleClick"/>
                                 <Separator/>
                                 <MenuItem Header="Zoomer" InputGestureText="Ctrl++" Click="ZoomInClick"/>
                                 <MenuItem Header="Dézoomer" InputGestureText="Ctrl+−" Click="ZoomOutClick"/>
@@ -228,6 +238,54 @@
                 <Border x:Name="PageBorder" Background="White"/>
                 <ae:TextEditor x:Name="Editor" WordWrap="True" ShowLineNumbers="False" Background="White"
                                HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Visibility="Collapsed"/>
+
+                <!-- Réglette à gauche de la colonne : un trait par titre ; celui de la section courante est plus long et
+                     noir. Survol : aperçu de la section ; clic : défilement animé jusqu'à elle. -->
+                <StackPanel x:Name="OutlineRuler" HorizontalAlignment="Left" VerticalAlignment="Center" Background="Transparent" Visibility="Collapsed"
+                            MouseLeave="OutlineMouseLeave"/>
+                <Popup x:Name="OutlinePopup" AllowsTransparency="True" Placement="Right" HorizontalOffset="6" StaysOpen="True" IsHitTestVisible="False" PopupAnimation="Fade">
+                    <Border Margin="10" Background="White" CornerRadius="10" BorderBrush="{StaticResource Filet}" BorderThickness="1" Padding="13,10" MaxWidth="300">
+                        <Border.Effect><DropShadowEffect BlurRadius="18" ShadowDepth="3" Direction="270" Opacity="0.10" Color="Black"/></Border.Effect>
+                        <StackPanel>
+                            <TextBlock x:Name="OutlinePopupTitle" FontWeight="Bold" FontSize="13.5" TextWrapping="Wrap"/>
+                            <TextBlock x:Name="OutlinePopupExcerpt" FontSize="12.5" Foreground="{StaticResource TexteSecondaire}" TextWrapping="Wrap" MaxHeight="54" TextTrimming="WordEllipsis" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </Popup>
+
+                <!-- Barre « Demander à l'IA… » : prépare une demande pour Claude (document, sélection, consignes), la copie
+                     dans le presse-papiers et prend un instantané pour voir ensuite ses modifications. -->
+                <Border x:Name="AiBar" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="0,0,0,18" Visibility="Collapsed"
+                        Background="White" CornerRadius="16" BorderBrush="{StaticResource Filet}" BorderThickness="1" Padding="16,11,10,8">
+                    <Border.Effect><DropShadowEffect BlurRadius="20" ShadowDepth="3" Direction="270" Opacity="0.08" Color="Black"/></Border.Effect>
+                    <StackPanel>
+                        <Grid>
+                            <TextBox x:Name="AiBox" BorderThickness="0" Background="Transparent" FontSize="14.5" TextWrapping="Wrap" AcceptsReturn="False" MaxHeight="120"
+                                     VerticalScrollBarVisibility="Auto" Padding="0,1" PreviewKeyDown="AiKeyDown" TextChanged="AiTextChanged"/>
+                            <TextBlock x:Name="AiPlaceholder" Text="Demander à l'IA…" IsHitTestVisible="False" Foreground="{StaticResource TexteSecondaire}" FontSize="14.5" Margin="2,1,0,0"/>
+                        </Grid>
+                        <DockPanel Margin="0,8,0,0">
+                            <Button x:Name="AiPlusButton" DockPanel.Dock="Left" Style="{StaticResource BoutonIcone}" Width="28" Height="28" Margin="-7,0,0,0" Click="AiPlusClick" ToolTip="Plus d'options">
+                                <Image Source="{local:Icon plus, Size=16}" Width="16" Height="16"/>
+                                <Button.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Commenter la sélection" InputGestureText="Ctrl+Maj+M" Click="CommentClick"/>
+                                        <MenuItem x:Name="AiSendCommentsItem" Header="Envoyer les commentaires à Claude" Click="CopyPromptClick"/>
+                                        <MenuItem Header="Enregistrer la demande dans un fichier…" Click="AiSaveClick"/>
+                                        <Separator/>
+                                        <MenuItem Header="Créer un instantané (point de comparaison)" Click="TakeSnapshotClick"/>
+                                        <MenuItem Header="Masquer cette barre" Click="AiBarToggleClick"/>
+                                    </ContextMenu>
+                                </Button.ContextMenu>
+                            </Button>
+                            <Button x:Name="AiSendButton" DockPanel.Dock="Right" Style="{StaticResource BoutonRond}" IsEnabled="False" Click="AiSendClick"
+                                    ToolTip="Copier la demande pour Claude (Entrée) ; un instantané est gardé pour voir ensuite ses modifications">
+                                <Image Source="{local:Icon paper-plane, Size=15, Color=#FFFFFF}" Width="15" Height="15"/>
+                            </Button>
+                            <TextBlock x:Name="AiContext" VerticalAlignment="Center" Margin="4,0,10,0" FontSize="12" Foreground="{StaticResource TexteSecondaire}" TextTrimming="CharacterEllipsis"/>
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
                 <StackPanel x:Name="Welcome" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="460">
                     <Image Source="Ressources/Icone.png" Width="96" Height="96" Margin="0,0,0,14"/>
                     <TextBlock Text="Écritoire" FontSize="30" HorizontalAlignment="Center" x:Name="WelcomeTitle"/>
@@ -303,12 +361,26 @@
                         <DockPanel x:Name="InspectorPanel" Visibility="Collapsed">
                             <ScrollViewer VerticalScrollBarVisibility="Auto">
                                 <StackPanel x:Name="InspectorFields" Margin="18,16,18,16">
-                                    <DockPanel Margin="0,0,0,12">
-                                        <Button DockPanel.Dock="Right" Style="{StaticResource BoutonIcone}" Width="26" Height="26" Click="InspectorToggleClick" ToolTip="Masquer l'inspecteur (Ctrl+I)">
+                                    <!-- Liens : [[…]] du document -->
+                                    <DockPanel Margin="0,0,0,4">
+                                        <Button DockPanel.Dock="Right" Style="{StaticResource BoutonIcone}" Width="26" Height="26" Click="InspectorToggleClick" ToolTip="Masquer le panneau (Ctrl+I)">
                                             <Image Source="{local:Icon close, Size=14}" Width="14" Height="14"/>
                                         </Button>
-                                        <TextBlock Text="Métadonnées" Foreground="{StaticResource TexteSecondaire}" FontSize="13.5" VerticalAlignment="Center"/>
+                                        <Button DockPanel.Dock="Right" Style="{StaticResource BoutonIcone}" Width="26" Height="26" Click="AddLinkClick" ToolTip="Insérer un lien [[…]] au curseur">
+                                            <Image Source="{local:Icon plus, Size=14}" Width="14" Height="14"/>
+                                        </Button>
+                                        <TextBlock Text="Liens" Foreground="{StaticResource TexteSecondaire}" FontSize="13.5" VerticalAlignment="Center"/>
                                     </DockPanel>
+                                    <StackPanel x:Name="LinksList" Margin="-8,0,-8,0"/>
+                                    <TextBlock x:Name="LinksMore" Foreground="{StaticResource TexteSecondaire}" FontSize="12.5" Cursor="Hand" Margin="0,4,0,0" MouseLeftButtonUp="LinksMoreClick" Visibility="Collapsed"/>
+
+                                    <!-- Rétroliens : documents du classeur qui pointent vers celui-ci -->
+                                    <TextBlock Text="Rétroliens" Foreground="{StaticResource TexteSecondaire}" FontSize="13.5" Margin="0,16,0,6"/>
+                                    <StackPanel x:Name="BacklinksList" Margin="-8,0,-8,0"/>
+                                    <TextBlock x:Name="BacklinksMore" Foreground="{StaticResource TexteSecondaire}" FontSize="12.5" Cursor="Hand" Margin="0,4,0,0" MouseLeftButtonUp="BacklinksMoreClick" Visibility="Collapsed"/>
+
+                                    <Border Height="1" Background="{StaticResource Filet}" Margin="0,16,0,14"/>
+                                    <TextBlock Text="Métadonnées" Foreground="{StaticResource TexteSecondaire}" FontSize="13.5" Margin="0,0,0,8"/>
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="22"/>
