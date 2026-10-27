@@ -93,17 +93,17 @@ public static class Theme
     }
 
     // Polices libres dans l'esprit du Monde diplomatique (Walbaum, Walbaum Grotesk) et de La Fabrique (Centennial) :
-    // une didone de texte, Libre Bodoni, et une grotesque, Hanken Grotesk.
-    static readonly FontFamily SerifFace = Embedded("Libre Bodoni");
-    /// <summary>Texte : Libre Bodoni, interligne de lecture confortable (1,5).</summary>
-    public static readonly FontFamily Serif = WithLineSpacing(SerifFace, 1.5);
+    // une grotesque, Hanken Grotesk, pour le texte et l'interface, et une didone, Libre Bodoni, pour les grands titres.
+    static readonly FontFamily BodyFace = Embedded("Hanken Grotesk");
+    /// <summary>Texte : Hanken Grotesk, comme l'intro, interligne de lecture confortable (1,5).</summary>
+    public static readonly FontFamily Serif = WithLineSpacing(BodyFace, 1.5);
     /// <summary>Lignes vides entre les paragraphes : plus basses qu'une ligne de texte, comme l'espace entre paragraphes
     /// de l'app macOS (sinon chaque paragraphe serait suivi d'une ligne entière).</summary>
-    public static readonly FontFamily ParagraphGap = WithLineSpacing(SerifFace, 0.8);
+    public static readonly FontFamily ParagraphGap = WithLineSpacing(BodyFace, 0.8);
     /// <summary>Grands titres : Libre Bodoni.</summary>
-    public static readonly FontFamily Display = SerifFace;
+    public static readonly FontFamily Display = Embedded("Libre Bodoni");
     /// <summary>Sous-titres, intro, citations, interface : Hanken Grotesk.</summary>
-    public static readonly FontFamily Grotesk = Embedded("Hanken Grotesk");
+    public static readonly FontFamily Grotesk = BodyFace;
     public static readonly FontFamily GroteskBlack = Grotesk;
 
     /// <summary>Corps du texte (19 pt dans l'app macOS) et largeur de colonne (600, 540 pour un poème).</summary>

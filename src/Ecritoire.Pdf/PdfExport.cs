@@ -32,7 +32,7 @@ public static class PdfExport
 
     static readonly object FontLock = new();
     static bool fontsReady;
-    static string serif = "Libre Bodoni", display = "Libre Bodoni", grotesk = "Hanken Grotesk", groteskBlack = "Hanken Grotesk";
+    static string serif = "Hanken Grotesk", display = "Libre Bodoni", grotesk = "Hanken Grotesk", groteskBlack = "Hanken Grotesk";
 
     /// <summary>Fichiers de polices embarqués (polices libres SIL OFL).</summary>
     public static readonly string[] FontFiles =
@@ -62,8 +62,8 @@ public static class PdfExport
             var families = FontManager.GetRegisteredFonts().Select(f => f.FamilyName).Distinct().ToList();
             string? Find(string part) =>
                 families.FirstOrDefault(f => f.Replace(" ", "").Contains(part, StringComparison.OrdinalIgnoreCase));
-            serif = display = Find("LibreBodoni") ?? serif;
-            grotesk = groteskBlack = Find("HankenGrotesk") ?? grotesk;
+            display = Find("LibreBodoni") ?? display;
+            serif = grotesk = groteskBlack = Find("HankenGrotesk") ?? grotesk;
             fontsReady = true;
         }
     }

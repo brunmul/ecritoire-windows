@@ -404,11 +404,12 @@ public sealed class MarkdownLook
                     spans = spans.Where(s => s.Start >= ch.Length).ToList();
                 }
             }
-            // Citation : le signe « > » laisse place à un petit retrait, à côté du filet.
+            // Citation : le signe « > » laisse place à un petit retrait, à côté du filet. L'intro n'a pas de filet : son
+            // signe est simplement masqué, sans retrait sur la première ligne seule.
             foreach (var s in spans)
             {
                 int a = offset + s.Start, len = s.Length;
-                if ((kind == LineKind.Quote || kind == LineKind.Intro) && s.Start == 0)
+                if (kind == LineKind.Quote && s.Start == 0)
                 {
                     double indent = Math.Round(look.FontSize * 0.9);
                     pending.Add((a, len, () => new InlineObjectElement(len, new Border { Width = indent, Height = 1 })));

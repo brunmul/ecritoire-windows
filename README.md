@@ -37,8 +37,8 @@ l'installateur est téléchargé, lancé sans questions, et Écritoire se rouvre
 
 ## Polices
 
-L'app embarque deux polices libres (licence SIL Open Font License, dans `src/Ecritoire.App/Polices`) : Libre Bodoni,
-une didone de texte, pour la page et les titres, et Hanken Grotesk pour l'interface et les sous-titres. Elles sont
+L'app embarque deux polices libres (licence SIL Open Font License, dans `src/Ecritoire.App/Polices`) : Hanken Grotesk
+pour le texte, l'intro, les sous-titres et l'interface, et Libre Bodoni, une didone, pour les grands titres. Elles sont
 choisies dans l'esprit des typographies du Monde diplomatique et des éditions La Fabrique. Aucune police payante n'est
 utilisée ni distribuée.
 
