@@ -7,14 +7,14 @@ using System.Text.Json;
 namespace Ecritoire.App;
 
 /// <summary>
-/// Mise à jour automatique : au lancement, l'app regarde la dernière version publiée sur GitHub (releases du dépôt public
-/// des versions, construites par GitHub Actions). Si elle est plus récente, un bouton le signale ; un clic télécharge
+/// Mise à jour automatique : au lancement, l'app regarde la dernière version publiée sur GitHub (releases du dépôt,
+/// construites par GitHub Actions). Si elle est plus récente, un bouton le signale ; un clic télécharge
 /// l'installateur Inno Setup, le lance sans questions, et l'app se ferme ; l'installateur la rouvre ensuite.
 /// </summary>
 public static class Updater
 {
-    /// <summary>Releases publiques (sans Walbaum) : seul endroit où l'app va chercher les nouvelles versions.</summary>
-    public const string Repository = "brunmul/ecritoire-windows-versions";
+    /// <summary>Dépôt public dont les releases (sans Walbaum) sont le seul endroit où l'app cherche ses nouvelles versions.</summary>
+    public const string Repository = "brunmul/ecritoire-windows";
 
     public sealed record Release(Version Version, string Tag, string InstallerUrl, string Notes);
 

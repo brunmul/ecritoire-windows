@@ -1,5 +1,5 @@
 # Fabrique une version d'Écritoire pour Windows : tests du format, exe autonome, installateur Inno Setup, puis
-# publication dans le dépôt public des versions, où l'app va chercher ses mises à jour.
+# publication dans les releases de ce dépôt (public), où l'app va chercher ses mises à jour.
 #
 # Pour publier : pousser une étiquette « vX.Y.Z » (par exemple git tag v0.3.0 && git push origin v0.3.0).
 # Lancement à la main (onglet Actions) : construit et garde l'installateur comme artefact, sans rien publier.
@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write # créer la release
 
 jobs:
   version:
@@ -63,15 +63,14 @@ jobs:
           name: Ecritoire-Installation-${{ steps.v.outputs.version }}
           path: publish/installateur/*.exe
 
-      - name: Publier dans le dépôt des versions
+      - name: Publier la release
         if: github.ref_type == 'tag'
         shell: pwsh
         env:
-          # Jeton à accès limité (Contents : lecture et écriture, sur brunmul/ecritoire-windows-versions seulement).
-          GH_TOKEN: ${{ secrets.VERSIONS_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           $tag = "${{ github.ref_name }}"
           $previous = git describe --tags --abbrev=0 "$tag^" 2>$null
           $range = if ($previous) { "$previous..$tag" } else { $tag }
           $notes = (git log $range --pretty=format:"- %s") -join "`n"
-          gh release create $tag publish/installateur/*.exe --repo brunmul/ecritoire-windows-versions --title "Écritoire $($tag.TrimStart('v'))" --notes "$notes"
+          gh release create $tag publish/installateur/*.exe --repo ${{ github.repository }} --title "Écritoire $($tag.TrimStart('v'))" --notes "$notes"

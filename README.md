@@ -31,7 +31,7 @@ installation de .NET.
 
 Une étiquette `vX.Y.Z` poussée sur GitHub lance `.github/workflows/version.yml` : tests du format, exe autonome,
 installateur Inno Setup (`installateur/Ecritoire.iss`, installation sans droits administrateur), puis publication dans
-le dépôt public des versions (`brunmul/ecritoire-windows-versions`, jeton `VERSIONS_TOKEN`). Au lancement, l'app
+les releases de ce dépôt. Au lancement, l'app
 regarde la dernière version publiée ; si elle est plus récente, un bouton « Mettre à jour » apparaît dans l'en-tête :
 l'installateur est téléchargé, lancé sans questions, et Écritoire se rouvre.
 
