@@ -21,7 +21,8 @@ public enum LineKind { Body, Empty, Heading, Quote, Intro, CalloutHeader, Image,
 /// <summary>
 /// Mise en forme du Markdown façon traitement de texte, comme l'app macOS (MarkdownHighlighter.swift) : titres, corps,
 /// intro, citations en Grotesk grise avec un filet, gras, italique, liens, surlignages. Les signes Markdown sont masqués,
-/// sauf dans le paragraphe du curseur où ils apparaissent estompés. En affichage poème : bloc titre centré, versets en
+/// sauf dans le paragraphe du curseur où ils apparaissent estompés. Une poignée à 6 points dans la marge, comme Notion,
+/// déplace un paragraphe par glisser-déposer et ouvre ses options au clic. En affichage poème : bloc titre centré, versets en
 /// retrait suspendu, numéros « [n] » masqués et dessinés dans la marge.
 /// </summary>
 public sealed class MarkdownLook
@@ -42,6 +43,7 @@ public sealed class MarkdownLook
         editor.TextArea.TextView.LineTransformers.Add(new Colorizer(this));
         editor.TextArea.TextView.ElementGenerators.Add(new MarkerHider(this));
         editor.TextArea.TextView.BackgroundRenderers.Add(new QuoteRuleRenderer(this));
+        editor.TextArea.TextView.BackgroundRenderers.Add(new DropRenderer(this));
         gutter = new Gutter(this);
         editor.TextArea.LeftMargins.Insert(0, gutter);
         editor.TextArea.Caret.PositionChanged += (_, _) => CaretMoved();
@@ -480,23 +482,268 @@ public sealed class MarkdownLook
         }
     }
 
-    /// <summary>Marge de gauche : filet lavande du paragraphe du curseur, et numéros de versets d'un poème.</summary>
-    sealed class Gutter : AbstractMargin
+    /// <summary>Trait de dépôt pendant le glisser-déposer d'un paragraphe (poignée de la marge).</summary>
+    sealed class DropRenderer : IBackgroundRenderer
     {
         readonly MarkdownLook look;
-        public Gutter(MarkdownLook look) { this.look = look; }
+        public DropRenderer(MarkdownLook look) { this.look = look; }
+        public KnownLayer Layer => KnownLayer.Selection;
+
+        public void Draw(TextView view, DrawingContext dc)
+        {
+            if (look.gutter.DropY is not { } y) return;
+            double width = Math.Min(view.ActualWidth, look.ColumnWidth);
+            dc.DrawRoundedRectangle(Theme.Accent, null, new Rect(0, y - 1.5, width, 3), 1.5, 1.5);
+        }
+    }
+
+    /// <summary>
+    /// Marge de gauche : poignée à 6 points du paragraphe survolé, comme Notion (glisser pour le déplacer, cliquer pour
+    /// ses options), et numéros de versets d'un poème.
+    /// </summary>
+    sealed class Gutter : AbstractMargin
+    {
+        static readonly SolidColorBrush GripInk = Frozen(Color.FromRgb(0xA3, 0xA3, 0x9E));
+        static readonly SolidColorBrush GripInkHover = Frozen(Color.FromRgb(0x5C, 0x5C, 0x58));
+        static readonly SolidColorBrush GripHover = Frozen(Color.FromArgb(0x14, 0, 0, 0));
+        static SolidColorBrush Frozen(Color c) { var b = new SolidColorBrush(c); b.Freeze(); return b; }
+
+        readonly MarkdownLook look;
+        int hoverLine = -1, pressLine = -1, dropBefore = -1;
+        bool overGrip, dragging;
+        Point pressPoint;
+        public double? DropY { get; private set; }
+
+        public Gutter(MarkdownLook look) { this.look = look; Cursor = System.Windows.Input.Cursors.Arrow; }
 
         protected override Size MeasureOverride(Size availableSize) =>
             new(look.PoemMode ? Math.Round(look.FontSize * 3.0) : Math.Round(look.FontSize * 1.4), 0);
 
         protected override void OnTextViewChanged(TextView? oldTextView, TextView? newTextView)
         {
-            if (oldTextView != null) { oldTextView.VisualLinesChanged -= Redraw; oldTextView.ScrollOffsetChanged -= Redraw; }
+            if (oldTextView != null)
+            {
+                oldTextView.VisualLinesChanged -= Redraw; oldTextView.ScrollOffsetChanged -= Redraw;
+                oldTextView.MouseMove -= TextMouseMove; oldTextView.MouseLeave -= TextMouseLeave;
+            }
             base.OnTextViewChanged(oldTextView, newTextView);
-            if (newTextView != null) { newTextView.VisualLinesChanged += Redraw; newTextView.ScrollOffsetChanged += Redraw; }
+            if (newTextView != null)
+            {
+                newTextView.VisualLinesChanged += Redraw; newTextView.ScrollOffsetChanged += Redraw;
+                newTextView.MouseMove += TextMouseMove; newTextView.MouseLeave += TextMouseLeave;
+            }
         }
 
         void Redraw(object? sender, EventArgs e) => InvalidateVisual();
+
+        double GripX => look.PoemMode ? 10 : ActualWidth - 13;
+
+        /// <summary>Ligne du document sous une hauteur de la vue (coordonnées de la vue), ou -1.</summary>
+        int LineAt(double y)
+        {
+            var view = TextView;
+            if (view == null || !view.VisualLinesValid) return -1;
+            var vl = view.GetVisualLineFromVisualTop(y + view.VerticalOffset);
+            return vl?.FirstDocumentLine.LineNumber ?? -1;
+        }
+
+        bool ShowsGrip(int lineNumber)
+        {
+            if (lineNumber < 1 || lineNumber > look.Editor.Document.LineCount || look.Editor.IsReadOnly) return false;
+            var kind = look.KindOf(lineNumber);
+            return kind != LineKind.Empty && !(kind == LineKind.CalloutHeader && !look.IsActive(lineNumber));
+        }
+
+        /// <summary>Zone de la poignée sur la première ligne visuelle du paragraphe (coordonnées de la marge).</summary>
+        Rect? GripRect(int lineNumber)
+        {
+            var view = TextView;
+            if (view == null || !view.VisualLinesValid) return null;
+            var vl = view.GetVisualLine(lineNumber);
+            if (vl == null) return null;
+            double top = vl.VisualTop - view.VerticalOffset;
+            double height = vl.TextLines.Count > 0 ? vl.TextLines[0].Height : vl.Height;
+            return new Rect(GripX - 9, top + height / 2 - 12, 18, 24);
+        }
+
+        void SetHover(int line)
+        {
+            if (line == hoverLine) return;
+            hoverLine = line;
+            InvalidateVisual();
+        }
+
+        void TextMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (TextView is { } view && pressLine < 0) SetHover(LineAt(e.GetPosition(view).Y));
+        }
+
+        void TextMouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (pressLine < 0 && !IsMouseOver) SetHover(-1);
+        }
+
+        protected override void OnMouseMove(System.Windows.Input.MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            var p = e.GetPosition(this);
+            if (pressLine > 0)
+            {
+                if (!dragging && (Math.Abs(p.Y - pressPoint.Y) > 4 || Math.Abs(p.X - pressPoint.X) > 4)) dragging = true;
+                if (dragging) UpdateDrop(e.GetPosition(TextView).Y);
+                return;
+            }
+            SetHover(LineAt(p.Y));
+            bool over = ShowsGrip(hoverLine) && GripRect(hoverLine) is { } r && r.Contains(p);
+            if (over != overGrip) { overGrip = over; InvalidateVisual(); }
+            Cursor = over ? System.Windows.Input.Cursors.Hand : System.Windows.Input.Cursors.Arrow;
+        }
+
+        protected override void OnMouseLeave(System.Windows.Input.MouseEventArgs e)
+        {
+            base.OnMouseLeave(e);
+            if (pressLine > 0) return;
+            overGrip = false;
+            SetHover(-1);
+            InvalidateVisual();
+        }
+
+        protected override void OnMouseLeftButtonDown(System.Windows.Input.MouseButtonEventArgs e)
+        {
+            base.OnMouseLeftButtonDown(e);
+            var p = e.GetPosition(this);
+            if (!ShowsGrip(hoverLine) || GripRect(hoverLine) is not { } r || !r.Contains(p)) return;
+            pressLine = hoverLine;
+            pressPoint = p;
+            dragging = false;
+            CaptureMouse();
+            e.Handled = true;
+        }
+
+        protected override void OnMouseLeftButtonUp(System.Windows.Input.MouseButtonEventArgs e)
+        {
+            base.OnMouseLeftButtonUp(e);
+            if (pressLine < 0) return;
+            int line = pressLine, before = dropBefore;
+            bool moved = dragging;
+            pressLine = -1; dropBefore = -1; dragging = false;
+            ReleaseMouseCapture();
+            ClearDrop();
+            Cursor = System.Windows.Input.Cursors.Hand;
+            e.Handled = true;
+            if (moved) { if (before > 0) Apply(ParagraphBlocks.Move(look.Editor.Text, line - 1, before - 1)); }
+            else ShowMenu(line);
+        }
+
+        protected override void OnLostMouseCapture(System.Windows.Input.MouseEventArgs e)
+        {
+            base.OnLostMouseCapture(e);
+            if (pressLine < 0) return;
+            pressLine = -1; dropBefore = -1; dragging = false;
+            ClearDrop();
+        }
+
+        /// <summary>Place du dépôt : avant le bloc survolé (moitié haute) ou avant le suivant (moitié basse).</summary>
+        void UpdateDrop(double y)
+        {
+            var view = TextView;
+            var doc = look.Editor.Document;
+            if (view == null || !view.VisualLinesValid) return;
+            Cursor = System.Windows.Input.Cursors.SizeAll;
+            var lines = ParagraphBlocks.Lines(doc.Text);
+            int at = LineAt(Math.Max(0, y));
+            if (at < 1) at = y < 0 ? 1 : doc.LineCount;
+            // Ligne vide : on vise le paragraphe suivant.
+            while (at < doc.LineCount && lines[at - 1].Trim().Length == 0) at++;
+            var (start, end) = ParagraphBlocks.Block(lines, at - 1);
+            double blockTop = view.GetVisualTopByDocumentLine(start + 1) - view.VerticalOffset;
+            double blockBottom = view.GetVisualTopByDocumentLine(end + 1) - view.VerticalOffset + (view.GetVisualLine(end + 1)?.Height ?? 0);
+            int before;
+            if (y < (blockTop + blockBottom) / 2) before = start + 1;
+            else
+            {
+                before = end + 2;
+                while (before <= doc.LineCount && lines[before - 1].Trim().Length == 0) before++;
+                if (before > doc.LineCount) before = doc.LineCount + 1;
+            }
+            dropBefore = before;
+            double dropY = before <= doc.LineCount
+                ? view.GetVisualTopByDocumentLine(before) - view.VerticalOffset - Math.Round(look.FontSize * 0.3)
+                : blockBottom + 2;
+            DropY = dropY;
+            view.InvalidateLayer(KnownLayer.Selection);
+        }
+
+        void ClearDrop()
+        {
+            DropY = null;
+            TextView?.InvalidateLayer(KnownLayer.Selection);
+        }
+
+        /// <summary>Remplace le texte d'un seul coup (une seule étape d'annulation) et place le curseur sur le bloc.</summary>
+        void Apply((string Text, int Line)? result)
+        {
+            if (result is not { } r) return;
+            var editor = look.Editor;
+            var doc = editor.Document;
+            double offset = editor.VerticalOffset;
+            doc.Replace(0, doc.TextLength, r.Text);
+            int line = Math.Clamp(r.Line + 1, 1, doc.LineCount);
+            editor.TextArea.Caret.Offset = doc.GetLineByNumber(line).EndOffset;
+            editor.ScrollToVerticalOffset(offset);
+            editor.TextArea.Caret.BringCaretToView();
+            editor.TextArea.Focus();
+        }
+
+        void TransformLine(int lineNumber, string prefix)
+        {
+            var doc = look.Editor.Document;
+            var line = doc.GetLineByNumber(lineNumber);
+            doc.Replace(line.Offset, line.Length, ParagraphBlocks.Transform(doc.GetText(line), prefix));
+            look.Editor.TextArea.Caret.Offset = doc.GetLineByNumber(lineNumber).EndOffset;
+            look.Editor.TextArea.Focus();
+        }
+
+        void ShowMenu(int lineNumber)
+        {
+            var text = look.Editor.Text;
+            var lines = ParagraphBlocks.Lines(text);
+            var (start, end) = ParagraphBlocks.Block(lines, lineNumber - 1);
+            MenuItem Item(string header, Action act, bool enabled = true)
+            {
+                var item = new MenuItem { Header = header, IsEnabled = enabled };
+                item.Click += (_, _) => act();
+                return item;
+            }
+            bool single = start == end && !lines[start].StartsWith("> [!");
+            var turn = new MenuItem { Header = "Transformer en", IsEnabled = single };
+            foreach (var (label, prefix) in new[] { ("Texte", ""), ("Titre 1", "# "), ("Titre 2", "## "), ("Titre 3", "### "), ("Citation", "> "), ("Liste à puces", "- ") })
+                turn.Items.Add(Item(label, () => TransformLine(lineNumber, prefix)));
+            int previous = start - 1;
+            while (previous >= 0 && lines[previous].Trim().Length == 0) previous--;
+            int next = end + 1;
+            while (next < lines.Length && lines[next].Trim().Length == 0) next++;
+            int afterNext = next < lines.Length ? ParagraphBlocks.Block(lines, next).End + 1 : -1;
+            while (afterNext >= 0 && afterNext < lines.Length && lines[afterNext].Trim().Length == 0) afterNext++;
+            var menu = new ContextMenu
+            {
+                PlacementTarget = this,
+                Placement = System.Windows.Controls.Primitives.PlacementMode.Relative,
+                HorizontalOffset = GripX + 10,
+                VerticalOffset = GripRect(lineNumber)?.Bottom ?? 0,
+                Items =
+                {
+                    turn,
+                    new Separator(),
+                    Item("Monter", () => Apply(ParagraphBlocks.Move(look.Editor.Text, start, ParagraphBlocks.Block(lines, previous).Start)), previous >= 0),
+                    Item("Descendre", () => Apply(ParagraphBlocks.Move(look.Editor.Text, start, afterNext)), next < lines.Length),
+                    Item("Dupliquer", () => Apply(ParagraphBlocks.Duplicate(look.Editor.Text, start))),
+                    new Separator(),
+                    Item("Supprimer", () => Apply(ParagraphBlocks.Delete(look.Editor.Text, start))),
+                },
+            };
+            menu.IsOpen = true;
+        }
 
         protected override void OnRender(DrawingContext dc)
         {
@@ -505,14 +752,21 @@ public sealed class MarkdownLook
             dc.DrawRectangle(Brushes.Transparent, null, new Rect(RenderSize));
             double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
             var doc = look.Editor.Document;
+            int gripLine = pressLine > 0 ? pressLine : hoverLine;
+            if (ShowsGrip(gripLine) && GripRect(gripLine) is { } grip)
+            {
+                bool lit = overGrip || pressLine > 0;
+                if (lit) dc.DrawRoundedRectangle(GripHover, null, grip, 4, 4);
+                var ink = lit ? GripInkHover : GripInk;
+                for (int row = -1; row <= 1; row++)
+                    for (int col = 0; col < 2; col++)
+                        dc.DrawEllipse(ink, null, new Point(grip.X + 6.5 + col * 5, grip.Y + grip.Height / 2 + row * 5), 1.4, 1.4);
+            }
             foreach (var vl in view.VisualLines)
             {
                 var line = vl.FirstDocumentLine;
                 double top = vl.VisualTop - view.VerticalOffset;
                 bool active = look.IsActive(line.LineNumber) && line.Length > 0;
-                if (active)
-                    dc.DrawRoundedRectangle(new SolidColorBrush(Color.FromArgb(0xB3, 0x7B, 0x5F, 0xBF)), null,
-                        new Rect(ActualWidth - 7, top + 3, 3, Math.Max(0, vl.Height - 6)), 1.5, 1.5);
                 if (look.PoemMode && look.KindOf(line.LineNumber) == LineKind.Verse && Poem.Marker(doc.GetText(line)) is { } marker)
                 {
                     var label = new FormattedText(marker.Number.ToString(), CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
