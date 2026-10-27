@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -11,7 +11,7 @@
     <AssemblyName>Ecritoire</AssemblyName>
     <RootNamespace>Ecritoire.App</RootNamespace>
     <Product>Écritoire</Product>
-    <Version>0.2.1</Version>
+    <Version>0.3.0</Version>
     <Copyright>GPL-3.0-or-later</Copyright>
     <ApplicationIcon>Ressources\Ecritoire.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>

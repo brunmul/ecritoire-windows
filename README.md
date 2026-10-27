@@ -27,11 +27,20 @@ dotnet publish src/Ecritoire.App -c Release -o publish
 Le résultat est un seul fichier `publish/Ecritoire.exe` (Windows 10 et 11, 64 bits), qui n'a besoin d'aucune
 installation de .NET.
 
+## Versions et mises à jour
+
+Une étiquette `vX.Y.Z` poussée sur GitHub lance `.github/workflows/version.yml` : tests du format, exe autonome,
+installateur Inno Setup (`installateur/Ecritoire.iss`, installation sans droits administrateur), puis publication dans
+le dépôt public des versions (`brunmul/ecritoire-windows-versions`, jeton `VERSIONS_TOKEN`). Au lancement, l'app
+regarde la dernière version publiée ; si elle est plus récente, un bouton « Mettre à jour » apparaît dans l'en-tête :
+l'installateur est téléchargé, lancé sans questions, et Écritoire se rouvre.
+
 ## Polices
 
-Le texte utilise Walbaum et Walbaum Grotesk si leurs fichiers sont placés dans `Local/Polices` au moment de la
-construction (dossier ignoré par git : ce sont des polices payantes, jamais distribuées). Sinon, l'app embarque deux
-polices libres : Libre Bodoni et Hanken Grotesk (licence SIL Open Font License, dans `src/Ecritoire.App/Polices`).
+Les versions publiques embarquent deux polices libres : Libre Bodoni et Hanken Grotesk (licence SIL Open Font License,
+dans `src/Ecritoire.App/Polices`). Walbaum et Walbaum Grotesk sont payantes et ne sont jamais distribuées : l'app les
+prend sur le PC, dans `%LOCALAPPDATA%\Ecritoire\Polices personnelles` (ou installées dans Windows), ce qui survit aux
+mises à jour. Une construction personnelle peut aussi les embarquer depuis `Local/Polices` (dossier ignoré par git).
 
 ## Compatibilité avec l'app macOS
 

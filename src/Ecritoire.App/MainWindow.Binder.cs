@@ -356,6 +356,9 @@ public partial class MainWindow
     /// <summary>Polices embarquées dans l'app (Walbaum dans une construction personnelle, sinon polices libres).</summary>
     static Stream? OpenFont(string file)
     {
+        // Polices personnelles (Walbaum) d'abord, puis celles embarquées dans l'app.
+        var personal = Path.Combine(Theme.PersonalFonts, file);
+        if (File.Exists(personal)) return File.OpenRead(personal);
         try { return Application.GetResourceStream(new Uri("pack://application:,,,/Polices/" + file))?.Stream; }
         catch (IOException) { return null; }
     }

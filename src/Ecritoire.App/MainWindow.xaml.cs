@@ -76,6 +76,7 @@ public partial class MainWindow : Window
             UpdateRightPanel();
             if (ProbeBinder != null) { OpenBinder(ProbeBinder); RunProbe(); }
             else if (settings.LastBinder is { } last && Directory.Exists(last)) OpenBinder(last);
+            if (ProbeBinder == null) CheckForUpdate();
         };
     }
 

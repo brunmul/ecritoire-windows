@@ -27,15 +27,41 @@ public static class Theme
 
     static readonly Uri Base = new("pack://application:,,,/");
 
-    /// <summary>Police embarquée si présente (Walbaum dans une construction personnelle), sinon la police libre de repli.</summary>
+    /// <summary>
+    /// Polices personnelles (Walbaum, payante) : posées par l'utilisateur dans %LOCALAPPDATA%\Ecritoire\Polices personnelles,
+    /// jamais dans l'exe ni dans le dépôt. Elles survivent ainsi aux mises à jour, qui installent la version publique.
+    /// </summary>
+    public static readonly string PersonalFonts =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ecritoire", "Polices personnelles");
+
+    static HashSet<string> NamesIn(Uri location)
+    {
+        try
+        {
+            return Fonts.GetFontFamilies(location)
+                .SelectMany(f => f.FamilyNames.Values.Append(f.Source.Split('#').Last())).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+        catch (Exception e) { App.Log(e); return new(); }
+    }
+
+    static readonly Lazy<HashSet<string>> PersonalNames = new(() =>
+        Directory.Exists(PersonalFonts) ? NamesIn(new Uri(PersonalFonts + Path.DirectorySeparatorChar)) : new());
+    static readonly Lazy<HashSet<string>> SystemNames = new(() =>
+        Fonts.SystemFontFamilies.SelectMany(f => f.FamilyNames.Values).ToHashSet(StringComparer.OrdinalIgnoreCase));
+
+    /// <summary>Première police trouvée : polices personnelles, polices installées dans Windows, polices embarquées
+    /// (Walbaum dans une construction personnelle) ; sinon la police libre de repli.</summary>
     static FontFamily Pick(params string[] names)
     {
         try
         {
-            var embedded = Fonts.GetFontFamilies(new Uri(Base, "./Polices/"))
-                .SelectMany(f => f.FamilyNames.Values.Append(f.Source.Split('#').Last())).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var embedded = NamesIn(new Uri(Base, "./Polices/"));
             foreach (var name in names)
+            {
+                if (PersonalNames.Value.Contains(name)) return new FontFamily(new Uri(PersonalFonts + Path.DirectorySeparatorChar), "./#" + name);
+                if (name.Contains("Walbaum") && SystemNames.Value.Contains(name)) return new FontFamily(name);
                 if (embedded.Contains(name)) return new FontFamily(Base, "./Polices/#" + name);
+            }
         }
         catch (Exception e) { App.Log(e); }
         // Repli sûr : police libre embarquée, sinon police du système.
@@ -82,11 +108,15 @@ public static class Theme
             var spaced = new FontFamily();
             foreach (var part in family.Source.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
             {
-                // Police embarquée : « ./Polices/#Nom » devient une adresse complète ; police du système : son nom.
+                // Police dans un dossier : « ./…/#Nom » devient une adresse complète ; police du système : son nom.
                 // Une famille composite ne sait pas viser une police embarquée (pack://) : on vise sa copie sur le disque.
-                var target = part.Contains('#') && FontsOnDisk() is { } folder
-                    ? new Uri(folder + Path.DirectorySeparatorChar).AbsoluteUri + part[part.IndexOf('#')..]
-                    : part;
+                string target = part;
+                if (part.Contains('#') && family.BaseUri != null)
+                {
+                    int hash = part.IndexOf('#');
+                    if (family.BaseUri.Scheme == "file") target = new Uri(family.BaseUri, part[..hash]).AbsoluteUri + part[hash..];
+                    else if (FontsOnDisk() is { } folder) target = new Uri(folder + Path.DirectorySeparatorChar).AbsoluteUri + part[hash..];
+                }
                 spaced.FamilyMaps.Add(new FontFamilyMap { Target = target, Unicode = "0000-10FFFF" });
             }
             spaced.LineSpacing = lineSpacing;

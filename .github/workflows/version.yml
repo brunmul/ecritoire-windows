@@ -1,0 +1,77 @@
+# Fabrique une version d'Écritoire pour Windows : tests du format, exe autonome, installateur Inno Setup, puis
+# publication dans le dépôt public des versions, où l'app va chercher ses mises à jour.
+#
+# Pour publier : pousser une étiquette « vX.Y.Z » (par exemple git tag v0.3.0 && git push origin v0.3.0).
+# Lancement à la main (onglet Actions) : construit et garde l'installateur comme artefact, sans rien publier.
+#
+# Jamais de police payante : Walbaum n'est pas dans le dépôt (dossier Local/ ignoré) ; la version publique utilise les
+# polices libres, et l'app charge Walbaum depuis %LOCALAPPDATA%\Ecritoire\Polices personnelles sur le PC de l'auteur.
+
+name: Version Windows
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Vérifier qu'aucune police payante n'est présente
+        shell: pwsh
+        run: |
+          if (Test-Path Local) { throw "Le dossier Local/ (polices personnelles) ne doit jamais être dans le dépôt." }
+          $payantes = git ls-files | Where-Object { $_ -match 'walbaum' }
+          if ($payantes) { throw "Police payante dans le dépôt : $payantes" }
+
+      - name: Numéro de version
+        id: v
+        shell: pwsh
+        run: |
+          $ref = "${{ github.ref_name }}"
+          $version = if ("${{ github.ref_type }}" -eq 'tag') { $ref.TrimStart('v') } else { '0.0.0' }
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Tests du format (compatibilité avec l'app macOS)
+        run: dotnet test -c Release
+
+      - name: Exe autonome
+        run: dotnet publish src/Ecritoire.App -c Release -o publish -p:Version=${{ steps.v.outputs.version }}
+
+      - name: Installateur Inno Setup
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup --no-progress -y; $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }
+          & $iscc /Qp "/DAppVersion=${{ steps.v.outputs.version }}" installateur\Ecritoire.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC a échoué ($LASTEXITCODE)" }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Ecritoire-Installation-${{ steps.v.outputs.version }}
+          path: publish/installateur/*.exe
+
+      - name: Publier dans le dépôt des versions
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          # Jeton à accès limité (Contents : lecture et écriture, sur brunmul/ecritoire-windows-versions seulement).
+          GH_TOKEN: ${{ secrets.VERSIONS_TOKEN }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $previous = git describe --tags --abbrev=0 "$tag^" 2>$null
+          $range = if ($previous) { "$previous..$tag" } else { $tag }
+          $notes = (git log $range --pretty=format:"- %s") -join "`n"
+          gh release create $tag publish/installateur/*.exe --repo brunmul/ecritoire-windows-versions --title "Écritoire $($tag.TrimStart('v'))" --notes "$notes"

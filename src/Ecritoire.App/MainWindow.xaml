@@ -160,6 +160,8 @@
                     <Image Source="{local:Icon sidebar-left, Size=18}" Width="18" Height="18"/>
                 </Button>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Nouvelle version disponible (vérifiée au lancement) -->
+                    <Button x:Name="UpdateButton" Style="{StaticResource BoutonAccent}" Padding="10,4" Margin="0,0,10,0" FontSize="12.5" Visibility="Collapsed" Click="UpdateClick"/>
                     <Border Background="#0D000000" CornerRadius="8" Padding="2" VerticalAlignment="Center" Margin="0,0,10,0">
                         <StackPanel Orientation="Horizontal">
                             <ToggleButton x:Name="ProseButton" Content="Prose" Style="{StaticResource Bascule}" Click="ProseClick" ToolTip="Affichage prose"/>
