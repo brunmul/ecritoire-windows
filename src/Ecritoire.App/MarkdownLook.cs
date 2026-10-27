@@ -58,7 +58,8 @@ public sealed class MarkdownLook
     {
         PoemMode = poem;
         FontSize = fontSize;
-        Editor.FontFamily = Theme.Serif;
+        // Police par défaut = celle des lignes vides (les lignes de texte reçoivent la leur du Colorizer).
+        Editor.FontFamily = Theme.ParagraphGap;
         Editor.FontSize = poem ? Math.Round(fontSize * 1.1) : fontSize;
         // Retrait suspendu des versets : lignes suivantes rentrées de 1,5 em.
         Editor.Options.WordWrapIndentation = poem ? Math.Round(Editor.FontSize * 1.5) : 0;
