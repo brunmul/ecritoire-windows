@@ -2,7 +2,9 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <!-- Thème Fluent de WPF (Windows 11) : encore marqué expérimental. -->
+    <NoWarn>$(NoWarn);WPF0001</NoWarn>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
@@ -11,7 +13,7 @@
     <AssemblyName>Ecritoire</AssemblyName>
     <RootNamespace>Ecritoire.App</RootNamespace>
     <Product>Écritoire</Product>
-    <Version>0.3.5</Version>
+    <Version>0.3.6</Version>
     <Copyright>GPL-3.0-or-later</Copyright>
     <ApplicationIcon>Ressources\Ecritoire.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>

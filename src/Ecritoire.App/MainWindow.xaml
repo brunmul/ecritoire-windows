@@ -82,11 +82,6 @@
                                 <TextBlock Text="Nouveau document" FontSize="14.5" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-                        <!-- Récents : derniers documents ouverts dans ce classeur -->
-                        <StackPanel DockPanel.Dock="Top" x:Name="RecentsSection" Visibility="Collapsed">
-                            <TextBlock Text="Récents" Foreground="{StaticResource TexteSecondaire}" FontSize="13" Margin="18,10,0,4"/>
-                            <StackPanel x:Name="RecentsList" Margin="6,0,6,0"/>
-                        </StackPanel>
                         <TextBlock DockPanel.Dock="Top" Text="Classeur" Foreground="{StaticResource TexteSecondaire}" FontSize="13" Margin="18,10,0,6"/>
                         <TreeView x:Name="Tree" Background="Transparent" BorderThickness="0" Padding="0,0,0,12"
                                   SelectedItemChanged="TreeSelectionChanged" AllowDrop="True" ContextMenuOpening="TreeContextMenuOpening"
@@ -101,7 +96,7 @@
                         <Border DockPanel.Dock="Top" Margin="10,2,10,8" Background="White" CornerRadius="8" BorderBrush="{StaticResource Accent}" BorderThickness="1">
                             <DockPanel Margin="10,6">
                                 <Image DockPanel.Dock="Left" Source="{local:Icon search, Size=16, Color=#8A8A8A}" Width="16" Height="16" Margin="0,0,8,0"/>
-                                <TextBox x:Name="SearchBox" BorderThickness="0" Background="Transparent" FontSize="14" TextChanged="SearchTextChanged" PreviewKeyDown="SearchKeyDown" VerticalContentAlignment="Center"/>
+                                <TextBox x:Name="SearchBox" Style="{StaticResource ChampNu}" BorderThickness="0" Background="Transparent" FontSize="14" TextChanged="SearchTextChanged" PreviewKeyDown="SearchKeyDown" VerticalContentAlignment="Center"/>
                             </DockPanel>
                         </Border>
                         <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource Filet}" BorderThickness="0,1,0,0" Height="32">
@@ -262,7 +257,7 @@
                     <Border.Effect><DropShadowEffect BlurRadius="20" ShadowDepth="3" Direction="270" Opacity="0.08" Color="Black"/></Border.Effect>
                     <StackPanel>
                         <Grid>
-                            <TextBox x:Name="AiBox" BorderThickness="0" Background="Transparent" FontSize="14.5" TextWrapping="Wrap" AcceptsReturn="False" MaxHeight="120"
+                            <TextBox x:Name="AiBox" Style="{StaticResource ChampNu}" BorderThickness="0" Background="Transparent" FontSize="14.5" TextWrapping="Wrap" AcceptsReturn="False" MaxHeight="120"
                                      VerticalScrollBarVisibility="Auto" Padding="0,1" PreviewKeyDown="AiKeyDown" TextChanged="AiTextChanged"/>
                             <TextBlock x:Name="AiPlaceholder" Text="Demander à l'IA…" IsHitTestVisible="False" Foreground="{StaticResource TexteSecondaire}" FontSize="14.5" Margin="2,1,0,0"/>
                         </Grid>
@@ -399,7 +394,7 @@
                                         </Grid.RowDefinitions>
                                         <Image Grid.Row="0" Source="{local:Icon text-size, Size=16, Color=#8A8A8A}" Width="16" Height="16" VerticalAlignment="Center"/>
                                         <TextBlock Grid.Row="0" Grid.Column="1" Text="Titre" Foreground="{StaticResource TexteSecondaire}" VerticalAlignment="Center" Margin="6,0,0,0"/>
-                                        <TextBox Grid.Row="0" Grid.Column="2" x:Name="TitleBox" BorderThickness="0" Background="Transparent" Padding="0,8" FontSize="13.5" TextChanged="InspectorChanged" VerticalContentAlignment="Center"/>
+                                        <TextBox Grid.Row="0" Grid.Column="2" x:Name="TitleBox" Style="{StaticResource ChampNu}" BorderThickness="0" Background="Transparent" Padding="0,8" FontSize="13.5" TextChanged="InspectorChanged" VerticalContentAlignment="Center"/>
 
                                         <Image Grid.Row="1" Source="{local:Icon status, Size=16, Color=#8A8A8A}" Width="16" Height="16" VerticalAlignment="Center"/>
                                         <TextBlock Grid.Row="1" Grid.Column="1" Text="Statut" Foreground="{StaticResource TexteSecondaire}" VerticalAlignment="Center" Margin="6,0,0,0"/>
@@ -407,7 +402,7 @@
 
                                         <Image Grid.Row="2" Source="{local:Icon align-left, Size=16, Color=#8A8A8A}" Width="16" Height="16" VerticalAlignment="Top" Margin="0,9,0,0"/>
                                         <TextBlock Grid.Row="2" Grid.Column="1" Text="Synopsis" Foreground="{StaticResource TexteSecondaire}" VerticalAlignment="Top" Margin="6,8,0,0"/>
-                                        <TextBox Grid.Row="2" Grid.Column="2" x:Name="SynopsisBox" BorderThickness="0" Background="Transparent" Padding="0,8" FontSize="13.5" TextWrapping="Wrap" AcceptsReturn="False"
+                                        <TextBox Grid.Row="2" Grid.Column="2" x:Name="SynopsisBox" Style="{StaticResource ChampNu}" BorderThickness="0" Background="Transparent" Padding="0,8" FontSize="13.5" TextWrapping="Wrap" AcceptsReturn="False"
                                                  MaxHeight="180" VerticalScrollBarVisibility="Auto" TextChanged="InspectorChanged"/>
 
                                         <Image Grid.Row="3" Source="{local:Icon globe, Size=16, Color=#8A8A8A}" Width="16" Height="16" VerticalAlignment="Center"/>

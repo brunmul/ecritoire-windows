@@ -174,7 +174,7 @@ public partial class MainWindow
         var name = node.DisplayName;
         var box = new TextBox
         {
-            Text = name, FontSize = label.FontSize, VerticalAlignment = VerticalAlignment.Center,
+            Style = (Style)FindResource("ChampNu"), Text = name, FontSize = label.FontSize, VerticalAlignment = VerticalAlignment.Center,
             Padding = new Thickness(2, 1, 2, 1), Margin = new Thickness(-3, 0, 0, 0), BorderThickness = new Thickness(1),
             BorderBrush = (Brush)FindResource("Accent"), Background = Brushes.White,
         };
@@ -266,7 +266,6 @@ public partial class MainWindow
         UpdateChangesUI();
         UpdateInspector();
         RebuildOutline();
-        RefreshRecents();
         UpdateAiBar();
     }
 

@@ -2,7 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Ecritoire.App"
-             StartupUri="MainWindow.xaml">
+             StartupUri="MainWindow.xaml" ThemeMode="Light">
     <Application.Resources>
         <!-- Teintes douces façon ChatGPT : cadre vert-gris pâle (barre de titre et rail d'icônes d'un seul tenant),
              barre latérale plus claire de la même teinte, page blanche. -->
@@ -335,62 +335,25 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Menu déroulant plat (statut de l'inspecteur) : texte et petit chevron, pastille au survol, liste en carte. -->
-        <Style TargetType="ComboBox">
+        <!-- Champ sans habillage (recherche, barre IA, inspecteur, renommage) : le thème Fluent ajouterait cadre et soulignement. -->
+        <Style x:Key="ChampNu" TargetType="TextBox">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{StaticResource Texte}"/>
-            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="CaretBrush" Value="{StaticResource Texte}"/>
+            <Setter Property="SelectionBrush" Value="{StaticResource Accent}"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="ComboBox">
-                        <Grid>
-                            <ToggleButton Focusable="False" ClickMode="Press" IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
-                                <ToggleButton.Template>
-                                    <ControlTemplate TargetType="ToggleButton">
-                                        <Border x:Name="Fond" Background="Transparent" CornerRadius="7" BorderBrush="{StaticResource Filet}" BorderThickness="1"/>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Fond" Property="Background" Value="{StaticResource Survol}"/></Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </ToggleButton.Template>
-                            </ToggleButton>
-                            <DockPanel IsHitTestVisible="False" Margin="10,5,8,5">
-                                <TextBlock DockPanel.Dock="Right" Text="&#xE70D;" FontFamily="{StaticResource Glyphes}" FontSize="9" Foreground="{StaticResource TexteSecondaire}" VerticalAlignment="Center" Margin="10,1,0,0"/>
-                                <ContentPresenter Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" VerticalAlignment="Center"/>
-                            </DockPanel>
-                            <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" AllowsTransparency="True" Focusable="False" PopupAnimation="Fade" VerticalOffset="2">
-                                <Border Background="White" CornerRadius="9" BorderBrush="{StaticResource Filet}" BorderThickness="1" Padding="4" Margin="6,0,6,8"
-                                        MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
-                                    <Border.Effect><DropShadowEffect BlurRadius="14" ShadowDepth="2" Direction="270" Opacity="0.10" Color="Black"/></Border.Effect>
-                                    <ScrollViewer MaxHeight="280" VerticalScrollBarVisibility="Auto"><ItemsPresenter/></ScrollViewer>
-                                </Border>
-                            </Popup>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        <Style TargetType="ComboBoxItem">
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ComboBoxItem">
-                        <Border x:Name="Fond" Background="Transparent" CornerRadius="6" Padding="10,5">
-                            <ContentPresenter/>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
+                            <ScrollViewer x:Name="PART_ContentHost" Padding="{TemplateBinding Padding}" Focusable="False"
+                                          HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="{TemplateBinding VerticalScrollBarVisibility}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                         </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsHighlighted" Value="True"><Setter TargetName="Fond" Property="Background" Value="{StaticResource Survol}"/></Trigger>
-                            <Trigger Property="IsSelected" Value="True"><Setter TargetName="Fond" Property="Background" Value="{StaticResource Selection}"/></Trigger>
-                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-        </Style>
-
-        <Style TargetType="ToolTip">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderBrush" Value="{StaticResource Filet}"/>
-            <Setter Property="Foreground" Value="{StaticResource Texte}"/>
-            <Setter Property="Padding" Value="8,4"/>
         </Style>
     </Application.Resources>
 </Application>

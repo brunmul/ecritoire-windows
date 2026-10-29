@@ -170,31 +170,4 @@ public partial class MainWindow
         Editor.TextArea.Caret.Offset = at + 2 + selected.Length;
         Editor.TextArea.Focus();
     }
-
-    // MARK: Récents
-
-    void RememberRecent(string path)
-    {
-        settings.RecentDocuments.RemoveAll(p => Binder.SamePath(p, path));
-        settings.RecentDocuments.Insert(0, path);
-        if (settings.RecentDocuments.Count > 40) settings.RecentDocuments.RemoveRange(40, settings.RecentDocuments.Count - 40);
-        RefreshRecents();
-    }
-
-    /// <summary>Quatre derniers documents de ce classeur, sans celui qui est ouvert (déjà en pastille dans l'arbre).</summary>
-    void RefreshRecents()
-    {
-        RecentsList.Children.Clear();
-        if (root == null) { RecentsSection.Visibility = Visibility.Collapsed; return; }
-        var recents = settings.RecentDocuments
-            .Where(p => p.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) && (current == null || !Binder.SamePath(p, current.Path)) && File.Exists(p))
-            .Take(4).ToList();
-        foreach (var p in recents)
-        {
-            var row = ListRow(null, Path.GetFileNameWithoutExtension(p), p, RelativeFolder(p), 14.5);
-            row.Padding = new Thickness(12, 0, 8, 0);
-            RecentsList.Children.Add(row);
-        }
-        RecentsSection.Visibility = recents.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-    }
 }

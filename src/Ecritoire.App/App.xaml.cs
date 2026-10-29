@@ -9,6 +9,9 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        // Menus Windows 11 (thème Fluent) : ils hériteraient sinon de la police de glyphes des boutons-icônes qui les ouvrent.
+        EventManager.RegisterClassHandler(typeof(System.Windows.Controls.ContextMenu), System.Windows.Controls.ContextMenu.OpenedEvent,
+            new RoutedEventHandler((sender, _) => ((System.Windows.Controls.ContextMenu)sender).FontFamily = Theme.Grotesk));
         // Vérification automatique : --captures dossier --classeur chemin
         var args = e.Args;
         int c = Array.IndexOf(args, "--captures"), b = Array.IndexOf(args, "--classeur");

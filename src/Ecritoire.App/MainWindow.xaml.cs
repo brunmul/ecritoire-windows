@@ -259,7 +259,6 @@ public partial class MainWindow : Window
         UpdateChangesUI();
         RefreshPendingChanges();
         UpdateInspector();
-        RememberRecent(path);
         RebuildOutline();
         RefreshLinks(force: true);
         UpdateAiBar();

@@ -50,7 +50,22 @@ public partial class MainWindow
             ("06b-renommage", () => { if (current != null) BeginRename(current.Path); }),
             ("06c-glisser-entre", () => ProbeDrop(0.1)),
             ("06d-glisser-dans-dossier", () => ProbeDrop(0.5)),
-            ("06e-fin", ClearDropMarker),
+            ("06e-menu-plus", () => { ClearDropMarker(); MoreButton.ContextMenu.PlacementTarget = MoreButton; MoreButton.ContextMenu.IsOpen = true; }),
+            ("06f-menu-classeur", () =>
+            {
+                MoreButton.ContextMenu.IsOpen = false;
+                menuTarget = current == null ? null : tree?.Find(current.Path);
+                Tree.ContextMenu!.PlacementTarget = Tree;
+                TreeContextMenuOpening(Tree, null!);
+                Tree.ContextMenu.IsOpen = true;
+            }),
+            ("06g-statut", () =>
+            {
+                Tree.ContextMenu!.IsOpen = false;
+                settings.InspectorVisible = true; UpdateInspector();
+                Dispatcher.BeginInvoke(() => StatusBox.IsDropDownOpen = true, DispatcherPriority.ApplicationIdle);
+            }),
+            ("06h-fin", () => { StatusBox.IsDropDownOpen = false; settings.InspectorVisible = false; UpdateInspector(); }),
             ("07-barre-masquee", () => CollapseSidebarClick(this, new RoutedEventArgs())),
         };
         int i = 0;
@@ -104,6 +119,14 @@ public partial class MainWindow
                 {
                     var at = card.PointToScreen(new Point(0, 0)) - content.PointToScreen(new Point(0, 0));
                     dc.DrawRectangle(new VisualBrush(card), null, new Rect(at.X / dpi.DpiScaleX, at.Y / dpi.DpiScaleY, card.ActualWidth, card.ActualHeight));
+                }
+                // Menus et listes déroulantes ouverts : chacun vit dans sa propre fenêtre surgissante.
+                foreach (var source in PresentationSource.CurrentSources.OfType<System.Windows.Interop.HwndSource>())
+                {
+                    if (source.RootVisual is not FrameworkElement popup || popup == this || !popup.IsVisible || popup.GetType().Name != "PopupRoot") continue;
+                    if (OutlinePopup.IsOpen && OutlinePopup.Child is FrameworkElement c && popup.IsAncestorOf(c)) continue;
+                    var at = popup.PointToScreen(new Point(0, 0)) - content.PointToScreen(new Point(0, 0));
+                    dc.DrawRectangle(new VisualBrush(popup), null, new Rect(at.X / dpi.DpiScaleX, at.Y / dpi.DpiScaleY, popup.ActualWidth, popup.ActualHeight));
                 }
                 // Le repère de dépôt vit dans la couche d'ornements de la fenêtre, hors du contenu.
                 if (dropMarker != null)
