@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using Ecritoire.Core;
 
 namespace Ecritoire.App;
 
@@ -46,6 +47,10 @@ public partial class MainWindow
             }),
             ("05-recherche", () => { CancelDraft(); ShowSearch(); SearchBox.Text = "forêt"; }),
             ("06-poeme", () => { HideSearch(); OpenProbeDocument("Demain, dès l’aube.md"); }),
+            ("06b-renommage", () => { if (current != null) BeginRename(current.Path); }),
+            ("06c-glisser-entre", () => ProbeDrop(0.1)),
+            ("06d-glisser-dans-dossier", () => ProbeDrop(0.5)),
+            ("06e-fin", ClearDropMarker),
             ("07-barre-masquee", () => CollapseSidebarClick(this, new RoutedEventArgs())),
         };
         int i = 0;
@@ -58,6 +63,18 @@ public partial class MainWindow
             i++;
         };
         timer.Start();
+    }
+
+    /// <summary>Repère de dépôt tel qu'il s'afficherait en glissant le document ouvert sur la ligne du premier dossier
+    /// (<paramref name="fraction"/> : hauteur dans la ligne ; 0,1 = juste avant, 0,5 = dedans).</summary>
+    void ProbeDrop(double fraction)
+    {
+        Tree.Focus(); // termine un renommage en cours
+        if (current == null || tree?.Find(current.Path) is not { } moving) return;
+        var row = VisibleRows().FirstOrDefault(r => r.Node.IsFolder && !Binder.SamePath(r.Node.Path, Path.GetDirectoryName(current.Path)!));
+        if (row.Item == null) return;
+        var p = new Point(row.Bounds.Left + 40, row.Bounds.Top + row.Bounds.Height * fraction);
+        if (DropTarget(p, moving) is { } t) ShowDropMarker(t.Box, t.Line); else ClearDropMarker();
     }
 
     void OpenProbeDocument(string name)
@@ -87,6 +104,14 @@ public partial class MainWindow
                 {
                     var at = card.PointToScreen(new Point(0, 0)) - content.PointToScreen(new Point(0, 0));
                     dc.DrawRectangle(new VisualBrush(card), null, new Rect(at.X / dpi.DpiScaleX, at.Y / dpi.DpiScaleY, card.ActualWidth, card.ActualHeight));
+                }
+                // Le repère de dépôt vit dans la couche d'ornements de la fenêtre, hors du contenu.
+                if (dropMarker != null)
+                {
+                    var at = Tree.TranslatePoint(new Point(0, 0), content);
+                    dc.PushTransform(new TranslateTransform(at.X, at.Y));
+                    dropMarker.Draw(dc);
+                    dc.Pop();
                 }
             }
             bitmap.Render(visual);

@@ -62,6 +62,7 @@ public partial class MainWindow : Window
         saveTimer.Tick += (_, _) => Save();
         searchTimer.Tick += (_, _) => { searchTimer.Stop(); RunSearch(); };
         treeTimer.Tick += (_, _) => { treeTimer.Stop(); ReloadTree(); };
+        renameTimer.Tick += (_, _) => { renameTimer.Stop(); if (pendingRename is { } path) BeginRename(path); };
         WelcomeTitle.FontFamily = Theme.Display;
         // Police d'interface : Hanken Grotesk.
         FontFamily = Theme.Grotesk;
@@ -124,17 +125,26 @@ public partial class MainWindow : Window
         else CloseDocument();
     }
 
-    void ReloadTree()
+    /// <param name="from">Élément qui vient de changer de chemin (renommé, déplacé) : ses dossiers ouverts le restent.</param>
+    void ReloadTree(string? from = null, string? to = null)
     {
         if (root == null) return;
+        if (renameBox != null) { treeTimer.Stop(); treeTimer.Start(); return; } // pas pendant un renommage
         var expanded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         void Collect(ItemsControl parent)
         {
             foreach (var item in parent.Items.OfType<TreeViewItem>())
-                if (item.IsExpanded && item.Tag is BinderNode n) { expanded.Add(n.Path); Collect(item); }
+                if (item.IsExpanded && item.Tag is BinderNode n)
+                {
+                    var path = n.Path;
+                    if (from != null && to != null && (Binder.SamePath(path, from) || path.StartsWith(from + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)))
+                        path = to + path[from.Length..];
+                    expanded.Add(path);
+                    Collect(item);
+                }
         }
         Collect(Tree);
-        tree = Binder.LoadTree(root);
+        tree = Binder.LoadTree(root, arranged: true);
         Tree.Items.Clear();
         foreach (var child in tree.Children) Tree.Items.Add(MakeItem(child, expanded));
         if (current != null) SelectInTree(current.Path);
@@ -144,15 +154,22 @@ public partial class MainWindow : Window
     {
         var (icon, color) = BinderIcons.For(node.Icon, node.IsFolder);
         var header = new DockPanel { VerticalAlignment = VerticalAlignment.Center };
+        // Numéro : la position dans le dossier (documents d'abord), qui suit chaque réorganisation.
+        int number = (node.Parent?.Children.IndexOf(node) ?? 0) + 1;
+        header.Children.Add(new TextBlock
+        {
+            Text = number.ToString(), VerticalAlignment = VerticalAlignment.Center, FontSize = 12.5, MinWidth = 15,
+            TextAlignment = TextAlignment.Right, Margin = new Thickness(0, 0, 8, 0), Foreground = (Brush)FindResource("TexteSecondaire"),
+        });
         if (icon != null)
         {
             var image = Icons.Make(icon, 17, color);
             image.Margin = new Thickness(0, 0, 9, 0);
             header.Children.Add(image);
         }
-        header.Children.Add(new TextBlock { Text = node.DisplayName, VerticalAlignment = VerticalAlignment.Center, FontSize = 14.5, TextTrimming = TextTrimming.CharacterEllipsis });
-        int depth = 0;
-        for (var p = node.Parent; p?.Parent != null; p = p.Parent) depth++;
+        // Tag « nom » : un clic dessus, sur l'élément déjà sélectionné, lance le renommage.
+        header.Children.Add(new TextBlock { Text = node.DisplayName, Tag = "nom", VerticalAlignment = VerticalAlignment.Center, FontSize = 14.5, TextTrimming = TextTrimming.CharacterEllipsis });
+        int depth = Depth(node);
         var item = new TreeViewItem
         {
             Header = header, Tag = node, Style = (Style)FindResource("LigneClasseur"),

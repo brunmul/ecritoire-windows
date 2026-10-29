@@ -90,7 +90,7 @@
                         <TextBlock DockPanel.Dock="Top" Text="Classeur" Foreground="{StaticResource TexteSecondaire}" FontSize="13" Margin="18,10,0,6"/>
                         <TreeView x:Name="Tree" Background="Transparent" BorderThickness="0" Padding="0,0,0,12"
                                   SelectedItemChanged="TreeSelectionChanged" AllowDrop="True" ContextMenuOpening="TreeContextMenuOpening"
-                                  PreviewMouseLeftButtonDown="TreeMouseDown" PreviewMouseMove="TreeMouseMove" DragOver="TreeDragOver" Drop="TreeDrop"
+                                  PreviewMouseLeftButtonDown="TreeMouseDown" PreviewMouseMove="TreeMouseMove" DragOver="TreeDragOver" DragLeave="TreeDragLeave" Drop="TreeDrop"
                                   PreviewMouseRightButtonDown="TreeRightMouseDown" KeyDown="TreeKeyDown"
                                   ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                   VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">

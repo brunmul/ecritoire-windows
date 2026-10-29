@@ -158,6 +158,25 @@ public static class BinderOperations
         return target;
     }
 
+    /// <summary>
+    /// Range un élément dans <paramref name="destination"/> à la position <paramref name="index"/> de l'ordre affiché
+    /// (<see cref="Binder.Arranged"/>, compté sans l'élément ; null : à la fin) et le déplace d'abord s'il change de
+    /// dossier. Un document ne passe jamais après un dossier, ni un dossier avant un document : la position est ramenée
+    /// dans sa partie. .order est réécrit dans cet ordre, que l'app macOS lit tel quel. Renvoie le nouveau chemin.
+    /// </summary>
+    public static string Place(string path, string destination, int? index, string? root = null)
+    {
+        var target = Binder.SamePath(Path.GetDirectoryName(path)!, destination) ? path : MoveItem(path, destination, null, root);
+        bool isDir = Directory.Exists(target);
+        var others = Binder.Arranged(destination).Where(p => !Binder.SamePath(p, target)).ToList();
+        int documents = others.Count(p => !Directory.Exists(p));
+        int position = Math.Clamp(index ?? others.Count, isDir ? documents : 0, isDir ? others.Count : documents);
+        var names = others.Select(p => Path.GetFileName(p)!).ToList();
+        names.Insert(position, Path.GetFileName(target));
+        if (!names.SequenceEqual(Binder.ReadOrder(destination))) WriteOrder(names, destination);
+        return target;
+    }
+
     /// <summary>Après la mise à la corbeille d'un élément (par l'app) : il quitte l'ordre de son dossier.</summary>
     public static void Trashed(string path) => RemoveFromOrder(Path.GetFileName(path), Path.GetDirectoryName(path)!);
 

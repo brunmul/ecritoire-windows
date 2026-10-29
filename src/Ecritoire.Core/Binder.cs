@@ -39,21 +39,22 @@ public static class Binder
     public const string DocumentExtension = ".md";
     static readonly UTF8Encoding Utf8 = new(false);
 
-    public static BinderNode LoadTree(string root)
+    /// <param name="arranged">true : documents avant dossiers (<see cref="Arranged"/>) ; false : ordre de .order, comme sur Mac.</param>
+    public static BinderNode LoadTree(string root, bool arranged = false)
     {
         var node = new BinderNode(root, true);
-        Fill(node);
+        Fill(node, arranged);
         return node;
     }
 
-    static void Fill(BinderNode folder)
+    static void Fill(BinderNode folder, bool arranged)
     {
         var icons = ReadIcons(folder.Path);
-        foreach (var path in OrderedEntries(folder.Path))
+        foreach (var path in arranged ? Arranged(folder.Path) : OrderedEntries(folder.Path))
         {
             var child = new BinderNode(path, Directory.Exists(path)) { Parent = folder };
             child.Icon = icons.GetValueOrDefault(System.IO.Path.GetFileName(path));
-            if (child.IsFolder) Fill(child);
+            if (child.IsFolder) Fill(child, arranged);
             folder.Children.Add(child);
         }
     }
@@ -89,6 +90,15 @@ public static class Binder
         rest.Sort((a, b) => Text.NaturalCompare(System.IO.Path.GetFileName(a), System.IO.Path.GetFileName(b)));
         result.AddRange(rest);
         return result;
+    }
+
+    /// <summary>Ordre affiché par l'app Windows : les documents d'abord, puis les dossiers, chacun dans l'ordre de .order.
+    /// Les numéros affichés dans l'arbre sont les positions dans cette liste.</summary>
+    public static List<string> Arranged(string folder)
+    {
+        var entries = OrderedEntries(folder);
+        var folders = entries.Where(Directory.Exists).ToList();
+        return entries.Except(folders).Concat(folders).ToList();
     }
 
     /// <summary>Les noms écrits sur macOS peuvent être décomposés (NFD) : on compare en forme composée.</summary>
