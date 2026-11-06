@@ -15,6 +15,16 @@ et inversement.
 - Affichage poème : versets `[n]` numérotés dans la marge, bloc titre centré, renumérotation automatique.
 - Zoom (Ctrl++, Ctrl+−, Ctrl+0).
 
+## Rendu « encre »
+
+Menu ⋯ › Rendu de l'encre : le texte peut prendre l'aspect d'une page imprimée, d'après les filtres SVG de
+[Papertooth](https://github.com/tbudin/papertooth) (licence MIT, Copyright (c) 2026 Plain Matter Pte Ltd), réécrits en
+un pixel shader WPF (`src/Ecritoire.App/Encre/Encre.fx`). Quatre styles : Net, Encre (plaques d'encre, le plus
+discret), Encre et bords, Machine à écrire (l'encre bave, avec de petits manques), et une intensité de 25 à 150 %.
+L'effet ne touche que la couche de texte (le curseur et la sélection restent nets) et demande une carte graphique :
+en bureau à distance, le texte reste net. `Encre.ps` est compilé par `.github/workflows/shader.yml` (fxc du Windows
+SDK), qui vérifie aussi qu'il est à jour.
+
 ## Construire
 
 Il faut le SDK .NET 8. La construction marche depuis Windows, macOS ou Linux :
