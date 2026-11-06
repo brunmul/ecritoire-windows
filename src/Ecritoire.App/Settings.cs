@@ -17,7 +17,6 @@ public sealed class Settings
     public string? ExportFolder { get; set; }
     /// <summary>Derniers documents ouverts (tous classeurs confondus, le plus récent d'abord).</summary>
     public List<string> RecentDocuments { get; set; } = new();
-    public bool AiBarVisible { get; set; } = true;
     public bool OutlineVisible { get; set; } = true;
     /// <summary>Rendu « encre » du texte (d'après Papertooth) : style et intensité (1 = réglages d'origine).</summary>
     [JsonConverter(typeof(JsonStringEnumConverter<InkStyle>))]

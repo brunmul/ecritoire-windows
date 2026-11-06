@@ -375,11 +375,8 @@ public partial class MainWindow : Window
         double left = Math.Max(24, Math.Round((available - column) / 2));
         double right = Math.Max(24, width - scrollbar - left - column);
         Editor.Padding = new Thickness(Math.Max(0, left - gutter), Math.Round(28 * zoom), right, 0);
-        // Réglette à gauche de la colonne (et des numéros de versets) ; barre IA centrée sous la colonne.
+        // Réglette à gauche de la colonne (et des numéros de versets).
         OutlineRuler.Margin = new Thickness(Math.Max(4, left - gutter - 58), 0, 0, 0);
-        double bar = Math.Min(column + 40, available - 24);
-        AiBar.Width = bar;
-        AiBar.Margin = new Thickness(Math.Max(12, left + column / 2 - bar / 2), 0, 0, 18);
         ZoomLabel.Text = Math.Abs(zoom - 1) < 0.001 ? "" : $"{Math.Round(zoom * 100)} %";
         ProseButton.IsChecked = !poemDisplay;
         PoemButton.IsChecked = poemDisplay;

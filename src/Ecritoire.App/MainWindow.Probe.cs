@@ -37,7 +37,7 @@ public partial class MainWindow
                     if (OutlineRuler.Children.Count > 2) ShowOutlinePreview(2, (FrameworkElement)OutlineRuler.Children[2]);
                 }, DispatcherPriority.ApplicationIdle);
             }),
-            ("03c-barre-ia", () => { OutlinePopup.IsOpen = false; Editor.Select(60, 80); AiBox.Text = "Resserre ce passage sans changer le sens"; }),
+            ("03c-barre-ia", () => { OutlinePopup.IsOpen = false; settings.InspectorVisible = true; UpdateInspector(); UpdateRightPanel(); Editor.Select(60, 80); AiBox.Text = "Resserre ce passage sans changer le sens"; }),
             ("04-commentaires", () =>
             {
                 settings.InspectorVisible = false;

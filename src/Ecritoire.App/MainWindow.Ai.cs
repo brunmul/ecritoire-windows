@@ -8,7 +8,7 @@ using Ecritoire.Core;
 namespace Ecritoire.App;
 
 /// <summary>
-/// Barre « Demander à l'IA… » (interface v2 de l'app macOS), en bas de la colonne. Comme sur Mac, elle n'appelle pas
+/// Section « Demander à l'IA… », épinglée en haut de l'inspecteur (panneau de droite), comme sur Mac. Comme sur Mac, elle n'appelle pas
 /// d'IA elle-même : elle prépare une demande pour Claude (la consigne, le passage sélectionné, le texte intégral), la copie
 /// dans le presse-papiers ou l'enregistre dans .ecritoire/prompts, et prend un instantané pour voir ensuite ce que Claude
 /// aura modifié.
@@ -18,13 +18,12 @@ public partial class MainWindow
     void InitAi()
     {
         Editor.TextArea.SelectionChanged += (_, _) => UpdateAiContext();
-        AiBarItem.IsChecked = settings.AiBarVisible;
     }
 
     void UpdateAiBar()
     {
-        AiBar.Visibility = settings.AiBarVisible && current != null && review == null ? Visibility.Visible : Visibility.Collapsed;
-        AiBarItem.IsChecked = settings.AiBarVisible;
+        // Dans l'inspecteur ; masquée pendant la relecture des modifications.
+        AiBar.Visibility = current != null && review == null ? Visibility.Visible : Visibility.Collapsed;
         AiSendCommentsItem.IsEnabled = current != null && comments.OpenCount > 0;
         AiSendCommentsItem.Header = comments.OpenCount > 0 ? $"Envoyer les commentaires à Claude ({comments.OpenCount})" : "Envoyer les commentaires à Claude";
         UpdateAiContext();
@@ -68,13 +67,6 @@ public partial class MainWindow
         menu.PlacementTarget = AiPlusButton;
         menu.Placement = PlacementMode.Top;
         menu.IsOpen = true;
-    }
-
-    void AiBarToggleClick(object sender, RoutedEventArgs e)
-    {
-        settings.AiBarVisible = !settings.AiBarVisible;
-        UpdateAiBar();
-        if (settings.AiBarVisible) AiBox.Focus(); else Editor.TextArea.Focus();
     }
 
     void CommentClick(object sender, RoutedEventArgs e) => StartComment();
