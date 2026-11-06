@@ -22,8 +22,11 @@ jobs:
           $fxc = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\fxc.exe" | Sort-Object FullName | Select-Object -Last 1
           if (-not $fxc) { throw "fxc.exe introuvable" }
           New-Item -ItemType Directory -Force compile | Out-Null
-          & $fxc.FullName /nologo /T ps_3_0 /E main /O3 /Fo compile\Encre.ps src\Ecritoire.App\Encre\Encre.fx
+          & $fxc.FullName /nologo /T ps_3_0 /E main /O3 /Fo compile\Encre.ps /Fc compile\Encre.asm src\Ecritoire.App\Encre\Encre.fx
           if ($LASTEXITCODE -ne 0) { throw "fxc a échoué ($LASTEXITCODE)" }
+          Select-String -Path compile\Encre.asm -Pattern 'instruction slots' | ForEach-Object { $_.Line }
+          # Le binaire en base 64 dans le journal, pour le récupérer sans télécharger l'artefact.
+          "ENCRE_PS_BASE64=" + [Convert]::ToBase64String([IO.File]::ReadAllBytes("compile\Encre.ps"))
 
       - uses: actions/upload-artifact@v4
         with:
