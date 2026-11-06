@@ -1,0 +1,38 @@
+# Compile le pixel shader du rendu « encre » (src/Ecritoire.App/Encre/Encre.fx) avec fxc, le compilateur HLSL du
+# Windows SDK, et vérifie que Encre.ps, versionné à côté, en est bien la compilation à jour.
+#
+# Après une modification de Encre.fx : récupérer l'artefact « Encre.ps » de ce workflow et le versionner.
+
+name: Shader encre
+
+on:
+  push:
+    paths: ['src/Ecritoire.App/Encre/**', '.github/workflows/shader.yml']
+  workflow_dispatch:
+
+jobs:
+  shader:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compiler Encre.fx (ps_3_0)
+        shell: pwsh
+        run: |
+          $fxc = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\fxc.exe" | Sort-Object FullName | Select-Object -Last 1
+          if (-not $fxc) { throw "fxc.exe introuvable" }
+          New-Item -ItemType Directory -Force compile | Out-Null
+          & $fxc.FullName /nologo /T ps_3_0 /E main /O3 /Fo compile\Encre.ps src\Ecritoire.App\Encre\Encre.fx
+          if ($LASTEXITCODE -ne 0) { throw "fxc a échoué ($LASTEXITCODE)" }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Encre.ps
+          path: compile/Encre.ps
+
+      - name: Encre.ps versionné à jour ?
+        shell: pwsh
+        run: |
+          $a = (Get-FileHash compile\Encre.ps).Hash
+          $b = (Get-FileHash src\Ecritoire.App\Encre\Encre.ps).Hash
+          if ($a -ne $b) { throw "Encre.ps n'est pas la compilation de Encre.fx : versionner l'artefact « Encre.ps » de ce workflow." }

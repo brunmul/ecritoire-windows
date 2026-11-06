@@ -38,6 +38,8 @@
     <!-- Polices libres (licence SIL OFL) : Libre Bodoni et Hanken Grotesk. -->
     <Resource Include="Polices\*.ttf" />
     <Resource Include="Ressources\Icone.png" />
+    <!-- Rendu « encre » : pixel shader compilé depuis Encre/Encre.fx (voir .github/workflows/shader.yml). -->
+    <Resource Include="Encre\Encre.ps" />
     <Resource Include="Ressources\Icones\*.svg" />
   </ItemGroup>
 

@@ -70,6 +70,7 @@ public partial class MainWindow : Window
         RightPanel.IsVisibleChanged += (_, _) => ApplyLayout();
         InitOutline();
         InitAi();
+        InitInk();
         PreviewKeyDown += Shortcuts;
         Loaded += (_, _) =>
         {
