@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Ecritoire.App;
 
@@ -18,6 +19,10 @@ public sealed class Settings
     public List<string> RecentDocuments { get; set; } = new();
     public bool AiBarVisible { get; set; } = true;
     public bool OutlineVisible { get; set; } = true;
+    /// <summary>Rendu « encre » du texte (d'après Papertooth) : style et intensité (1 = réglages d'origine).</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<InkStyle>))]
+    public InkStyle InkStyle { get; set; } = InkStyle.None;
+    public double InkIntensity { get; set; } = 1.0;
 
     static string FilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ecritoire", "reglages.json");
 

@@ -185,6 +185,25 @@
                                 <Separator/>
                                 <MenuItem x:Name="AiBarItem" Header="Barre « Demander à l'IA »" IsCheckable="True" Click="AiBarToggleClick"/>
                                 <MenuItem x:Name="OutlineItem" Header="Réglette des titres" IsCheckable="True" Click="OutlineToggleClick"/>
+                                <MenuItem x:Name="InkMenu" Header="Rendu de l'encre">
+                                    <MenuItem Header="Net" Tag="None" IsCheckable="True" Click="InkStyleClick"/>
+                                    <MenuItem Header="Encre" Tag="Plates" IsCheckable="True" Click="InkStyleClick" ToolTip="La couverture d'encre varie par plaques, comme une page imprimée. Le plus discret."/>
+                                    <MenuItem Header="Encre et bords" Tag="Edges" IsCheckable="True" Click="InkStyleClick" ToolTip="Plaques d'encre et bords légèrement rongés."/>
+                                    <MenuItem Header="Machine à écrire" Tag="Typewriter" IsCheckable="True" Click="InkStyleClick" ToolTip="L'encre bave et gonfle, avec de petits manques."/>
+                                    <Separator/>
+                                    <MenuItem x:Name="InkIntensityItem" StaysOpenOnClick="True">
+                                        <MenuItem.Header>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="Intensité" VerticalAlignment="Center" Width="64"/>
+                                                <Slider x:Name="InkIntensitySlider" Width="150" Minimum="0.25" Maximum="1.5" SmallChange="0.05" LargeChange="0.25"
+                                                        VerticalAlignment="Center" ValueChanged="InkIntensityChanged"/>
+                                                <TextBlock x:Name="InkIntensityText" VerticalAlignment="Center" Margin="10,0,0,0" Width="40"
+                                                           Foreground="{StaticResource TexteSecondaire}"/>
+                                            </StackPanel>
+                                        </MenuItem.Header>
+                                    </MenuItem>
+                                    <MenuItem Header="D'après Papertooth (tbudin/papertooth)" IsEnabled="False"/>
+                                </MenuItem>
                                 <Separator/>
                                 <MenuItem Header="Zoomer" InputGestureText="Ctrl++" Click="ZoomInClick"/>
                                 <MenuItem Header="Dézoomer" InputGestureText="Ctrl+−" Click="ZoomOutClick"/>
